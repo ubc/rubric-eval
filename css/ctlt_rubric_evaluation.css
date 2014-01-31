@@ -1,0 +1,19 @@
+.add_grading_group div {
+	float: left;
+	padding-right: 10px;
+}
+
+#add_grading_group_advanced_btn {
+	float: left;
+	clear: both;
+	margin-top: 10px;
+}
+
+.add_grading_group_advanced {
+	clear: both;
+	padding-top: 10px;
+}
+
+.rubric_evaluation_select {
+	width: 100px;
+}
