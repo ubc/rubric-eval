@@ -12,6 +12,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     private $options;
     private $roles;
     private $rubric;
+    private $students;
 
     /**
      * Start up
@@ -19,12 +20,12 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
-        
+
         //get student role
   		$this->_setup_author_and_options();
         $blog_id = get_current_blog_id();
         $fields = array('ID', 'user_login', 'user_nicename', 'display_name');
-        $this->authors = get_users(array('blog_id' => $blog_id, 'role' => 'author', 'fields' => $fields));
+        $this->students = get_users(array('blog_id' => $blog_id, 'role' => $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'], 'fields' => $fields));
     }
 
     /**
@@ -109,7 +110,58 @@ class CTLT_Rubric_Evaluation_Spreadsheet
      */
     public function output_spreadsheet()
     {
-        echo 'some ouitput for psreadsheet';
+    	echo "<table class='spreadsheet'><tr><th>".__('Students', 'ctlt_rubric_evaluation')."</th>";
+    	
+    	//columns
+    	$colomn_name = array_keys($this->rubric['rubric_evaluation_rubric_name']);
+    	foreach ($colomn_name as $cols) {
+    		echo '<th>'.$cols.'</th>'; 
+    		
+    	}
+    	echo "<th>".__('Total', 'ctlt_rubric_evaluation')."</tr>\n";
+    	
+    	//rows
+    	foreach ($this->students as $key => $student_info) {
+    		echo '<tr><td><a href="#id='.$student_info->ID.'">'.$student_info->display_name.'</a></td>';
+    		foreach ($colomn_name as $mark) {
+    			echo '<td>00</td>';
+    		}
+    		echo '<td>00</td>';
+    		echo '</tr>';
+    			
+    	}
+    	
+    	echo "</table>";
+		/*
+		 * 		$vertical_titles = !empty($this->options['rubric_evaluation_rubric_name'])? array_keys($this->options['rubric_evaluation_rubric_name']) : array();
+
+    	echo "<table class='rubric'>\n<tr><th>Actions</th><th>".'Type'."</th>";
+    	//table horizontal headers
+    	foreach ($this->rubric_headers as $h_title) {
+			echo '<th class="Type '.$this->_sanitize_class_name($h_title).'">'.$h_title.'</th>';
+		}
+		echo "</tr>\n";
+		
+		//table rows
+		$row = 1; //row count
+		foreach ($vertical_titles as $v_title) {
+			echo '<tr>';
+			echo '<td><a href="#delete" class="ctlt_rubric_delete_row" data-row="'.$row.'">x</a></td>';
+			echo '<td class="heading '.$this->_sanitize_class_name($v_title).'">'.
+					'<label id="rubric_evaluation_rubric_label_'.$row.'" value="'.$v_title.'" />'.$v_title.'</label>'.
+					'<input type="hidden" id="rubric_evaluation_rubric_values_'.$row.'" name="rubric_evaluation_rubric_name[rubric_evaluation_rubric_values_'.$row.']" value="'.$v_title.'"/>'.
+				'</td>';
+			for ($column = 1; $column < (sizeof($this->rubric_headers) + 1); $column++) {
+				$value = isset($this->options['rubric_evaluation_rubric_name'][$v_title][$this->rubric_headers[($column - 1)]]) ? $this->options['rubric_evaluation_rubric_name'][$v_title][$this->rubric_headers[($column - 1)]] : '';
+ 				echo '<td class="'.$this->_sanitize_class_name($v_title).' '.$this->_sanitize_class_name($this->rubric_headers[($column - 1)]).'">';
+				echo '<input type="text" id="rubric_evaluation_rubric_values_'.$row.'_'.$column.'" name="rubric_evaluation_rubric_name[rubric_evaluation_rubric_values_'.$row.'_'.$column.']" value="'.$value.'" />';
+				echo '</td>';
+        	}
+        	echo '</tr>';
+        	$row++;
+        }
+        echo '</table>';
+		 */
     }
 
     //======================================================================
@@ -124,7 +176,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
      */
     public function sanitize( $input )
     {
-    	error_log('sanitize spreadsheet input: '.print_r($input,true));
+//     	error_log('sanitize spreadsheet input: '.print_r($input,true));
     	//         $new_input = array();
     	//         if( isset( $input['id_number'] ) )
     		//             $new_input['id_number'] = absint( $input['id_number'] );
@@ -152,7 +204,12 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 		//get roles
 		$roles = get_option('rubric_evaluation_roles_settings');
 		if ($roles !== false) {
-			$this->roles = $roles['rubric_evaluation_roles_settings'];
+			$this->roles = $roles;
+			
+			//@TODO: temp placeholder to force teacher to have some sort of role
+			if (!isset($this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'])) {
+				$this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] = 'administrator';
+			}
 		}
 		
 		//get rubric
@@ -160,9 +217,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 		if ($rubric !== false) {
 			$this->rubric = $rubric;
 		}
-
-		error_log('options: '.print_r($this->options,true));
-		error_log('roles: '.print_r($this->roles,true));
 	}
 }
 

@@ -5,14 +5,22 @@
  * create tabs with: http://wp.tutsplus.com/tutorials/theme-development/the-complete-guide-to-the-wordpress-settings-api-part-5-tabbed-navigation-for-your-settings-page/
  * @author loongchan
  * TODO:
- * - check that taxonomy is removed as per removal of rows!
+ *
  * - do uninstall or disable plugin functions
  * - link to spreadsheet via anchor for type column names
- * - start fleshing out spreadsheet
- * - need to hook taxonomy to post/page create, edit page
+ * - need to display grades
+ * - need a way to enter grades
+ * - need a way to edit taxonomy on edit/create post page into radio button
  * - think about forcing usage of evaluate plugin
- * - need to add filter for posts/page list pages
+ * - need to add filter for posts/page list pages 
+ * - deal with mu stuff.....
+ * - deal with language stuff.....
+ * - add datepicker for due date / extended date
+ * - hide student weight for now?
  *
+ * DONE:
+ * - check that taxonomy is removed as per removal of rows! - done!
+ * - start fleshing out spreadsheet - just the look, need to add data
  */
 class CTLT_Rubric_Evaluation_Admin
 {
@@ -40,12 +48,18 @@ class CTLT_Rubric_Evaluation_Admin
         // Set class property
         $this->setup_options();
         $this->active_tab = (isset($_GET['tab']) && $_GET['tab'] === 'display_advanced'? $_GET['tab'] : 'display_rubric');
-
         //setup action hooks
         add_action( 'admin_menu', array( $this, 'rubric_evaluation_menu' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
         add_action( 'init', array( $this, 'create_taxonomy' ) );
-        
+
+//         $l = wp_list_categories(array('taxonomy' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
+//         error_log('wp-list-cats: '.print_r($l, true));
+//         $tax = get_taxonomies(array('name' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
+//         $taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
+//         error_log('tax: '.print_r($tax,true));
+//         error_log('taxterms: '.print_r($taxterms,true));
+
         //register scripts
         wp_register_script('CTLT_Rubric_Evaluation_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_evaluation.js', array('jquery'));
         wp_register_style('CTLT_Rubric_Evaluation_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_evaluation.css');
@@ -81,7 +95,6 @@ class CTLT_Rubric_Evaluation_Admin
     	} else {
     		$this->options['rubric_evaluation_roles_settings'] = array();
     	}
-    	error_log('init options: '.print_r($this->options,true));
     }
 
     /**
@@ -90,6 +103,10 @@ class CTLT_Rubric_Evaluation_Admin
     public function page_init() {
 		$this->setup_rubric_section();
 		$this->setup_roles_section();
+// 		$tax = get_taxonomies(array('name' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
+// 		$taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
+// 		error_log('tax: '.print_r($tax,true));
+// 		error_log('taxterms: '.print_r($taxterms,true));
     }
     
     public function setup_rubric_section() {
@@ -180,7 +197,7 @@ class CTLT_Rubric_Evaluation_Admin
     
     public function create_taxonomy() {
     	//register custom taxonomy if not set
-    	if (!taxonomy_exists('ctlt_rubric_evaluation')) {
+    	if (!taxonomy_exists(CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME)) {
     		// Add new taxonomy, NOT hierarchical (like tags)
     		$labels = array(
     				'name'                       => _x( 'CTLT rubric_evaluation', 'Taxonomy General Name', 'ctlt_rubric_evaluation' ),
@@ -205,11 +222,15 @@ class CTLT_Rubric_Evaluation_Admin
     				'public'                     => true,
     				'show_ui'                    => true,
     				'show_admin_column'          => true,
-   					'show_in_nav_menus'          => true,
+   					'show_in_nav_menus'          => false,
    					'show_tagcloud'              => true,
 			);
-			register_taxonomy( CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, null, $args );
+
+			register_taxonomy( CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, 'post', $args );
+			register_taxonomy_for_object_type(CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, 'post');
+			return;
 		}
+
     }
 
     //======================================================================
@@ -224,17 +245,24 @@ class CTLT_Rubric_Evaluation_Admin
 		if ($this->active_tab === 'display_rubric') {
     		wp_enqueue_script('CTLT_Rubric_Evaluation_Script');
 		}
+
+		//add active class to tabs based on get parameter tab
+		$active_rubric_class = $this->active_tab === 'display_rubric'? 'nav-tab-active' : '';
+		$active_advanced_class = $this->active_tab === 'display_advanced'? 'nav-tab-active' : '';
+
     	?>
             <div class="wrap">
                 <h2><?php _e('Rubric Evaluation Settings');?></h2>
-                <?php settings_errors('rubric_evaluation'); ?>    
+                <?php 
+                	if ($this->active_tab === 'display_advanced') {
+						settings_errors('rubric_evaluation_roles'); 
+					} else {
+						settings_errors('rubric_evaluation_rubric');
+					}
+				?>    
                 
                 <h2 class="nav-tab-wrapper">
-                <?php 
-                	//add active class to tabs based on get parameter tab
-                	$active_rubric_class = $this->active_tab === 'display_rubric'? 'nav-tab-active' : '';
-            		$active_advanced_class = $this->active_tab === 'display_advanced'? 'nav-tab-active' : '';
-            	?>
+
                 	<a href="?page=rubric_evaluation_settings&tab=display_rubric" class="nav-tab <?php echo $active_rubric_class; ?>"><?php echo _x('Rubric', 'rubric tab title', 'ctlt_rubric_evaluation');?></a>
                 	<a href="?page=rubric_evaluation_settings&tab=display_advanced" class="nav-tab <?php echo $active_advanced_class; ?>"><?php echo _x('Advanced', 'advanced tab title', 'ctlt_rubric_evaluation');?></a>
                 </h2> 
@@ -299,7 +327,7 @@ class CTLT_Rubric_Evaluation_Admin
 					?>
 					</select>
 				</div>
-				<div class="grading_group_advanced_posttype">
+				<div class="grading_group_advanced_posttype" style="display:none;">
 					<label class="rubric_evaluation_grading_group_advanced_field"><?php _e('Post Type', 'ctlt_rubric_evaluation');?></label>
 					<br>
 					<input id="rubric_evaluation_grading_group_advanced_field_posttype" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_advanced_field_posttype]" value="">
@@ -386,11 +414,33 @@ class CTLT_Rubric_Evaluation_Admin
     	}
     	
     	/** steps to add new labels
+    	 * 0. need to check for deleted stuff!
     	 * 1. check required and validate fields for new field (currently only label???)
     	 * 2. add to taxonomy term
     	 * 3. add to rubric data so that it saves properly with new line if appropriate
     	 */
+
+    	//step 0
+    	$submitted_table_types = array_keys($new_input);
+		$tax = get_taxonomies(array('name' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
+		$taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
+    	$saved_table_types = array();
+    	foreach( $taxterms as $key => $term) {
+			$saved_table_types[] = $term->name;
+		}
+		$to_be_removed_terms = array_diff($saved_table_types, $submitted_table_types);
+
+		foreach ($to_be_removed_terms as $index => $name) {
+			$term_id = $taxterms[$index]->term_id;
+			$worked = wp_delete_term($term_id, CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME);
+			if (is_wp_error($worked)) {
+				add_settings_error('rubric_evaluation_rubric', 'term_delete_failed', __('Failed to remove row(s).', 'ctlt_rubric_evaluation'));
+			}
+		}
+
+  		//step 1
     	if (isset($input['rubric_evaluation_grading_group_field_label']) && !empty($input['rubric_evaluation_grading_group_field_label'])) {
+			
 			$term_description = array(
 				'label' => $input['rubric_evaluation_grading_group_field_label'],
 				'note' => $input['rubric_evaluation_grading_group_field_note'],
@@ -400,20 +450,22 @@ class CTLT_Rubric_Evaluation_Admin
 				'posttype' => $input['rubric_evaluation_grading_group_advanced_field_posttype']
 			);
 			$term_description = serialize($term_description);
-			$added_term = wp_insert_term($input['rubric_evaluation_grading_group_field_label'], CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, array('description' => $term_description) );
 			
+			//step 2
+			$added_term = wp_insert_term($input['rubric_evaluation_grading_group_field_label'], CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, array('description' => $term_description) );
+
 			//now add to mucked array
-			if ( !is_wp_error($added_term) ) { 
+			if ( !is_wp_error($added_term) ) {
+				//step 3
 				foreach (range(1, sizeof($this->rubric_headers)) as $column) {
 	    			$new_input[$input['rubric_evaluation_grading_group_field_label']][$this->rubric_headers[($column - 1)]] = 0;
 				}
-				add_settings_error('rubric_evaluate', 'term_updated', __('Successfully added new row', 'ctlt_rubric_evaluation'), 'updated');
+				add_settings_error('rubric_evaluation_rubric', 'term_updated', __('Successfully added new row', 'ctlt_rubric_evaluation'), 'updated');
 			} else {
-				add_settings_error('rubric_evaluate', 'add_term_error', __('Problem adding new row', 'ctlt_rubric_evaluation'));
+				add_settings_error('rubric_evaluation_rubric', 'add_term_error', __('Problem adding new row', 'ctlt_rubric_evaluation'));
 			}
 		}
-    	error_log('sanitize input: '.print_r($input, true));
-    	error_log('sanitize new_input: '.print_r($new_input,true));
+
     	//format the add new row stuff
     	return array('rubric_evaluation_rubric_name' => $new_input);
     }
@@ -423,8 +475,8 @@ class CTLT_Rubric_Evaluation_Admin
     	foreach($input as $role => $selected_role) {
     		$new_input[$role] = $selected_role;
     	}
-    	error_log('sanitize role input: '.print_r($input, true));
-    	error_log('sanitize role new_input: '.print_r($new_input, true));
+//     	error_log('sanitize role input: '.print_r($input, true));
+//     	error_log('sanitize role new_input: '.print_r($new_input, true));
     	return array('rubric_evaluation_roles_settings' => $new_input);
     }
 
