@@ -26,6 +26,8 @@ class CTLT_Rubric_Evaluation_Spreadsheet
         $blog_id = get_current_blog_id();
         $fields = array('ID', 'user_login', 'user_nicename', 'display_name');
         $this->students = get_users(array('blog_id' => $blog_id, 'role' => $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'], 'fields' => $fields));
+    
+    	add_action('save_post', array( $this, 'save_rubric_grade'));
     }
 
     /**
@@ -47,7 +49,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
      * Register and add settings
      */
     public function page_init()
-    {        
+    {
         add_settings_section(
             'rubric_evaluation_spreadsheet_group', // ID
             __('Spreadsheet Section', 'ctlt_rubric_evaluation'), // Title
@@ -68,8 +70,17 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 	        'rubric_evaluation_spreadsheet_name', // Option name
 	        array( $this, 'sanitize' ) // Sanitize
         );
+        
+        //add metabox to edit post page
+        //@TODO: need to make it more flexible by making it for posts or pages
+        if (is_admin()) {
+        	add_meta_box('rubric_evaluation_box', 'test rubric box title', array($this, 'add_rubric_metabox'), 'post', 'side' );
+        }
     }
     
+    public function save_rubric_grade($post_id) {
+    	error_log('save_rubric_grade: '.print_r($_REQUEST['rubric_evaluation_instructor_grade'], true));
+    }
     //======================================================================
     //
     // Output functions
@@ -97,6 +108,15 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 			</div>
 			<?php
 	}
+	
+	public function add_rubric_metabox() {
+		global $post;
+		error_log('metabox for rubric: '.print_r($post->ID, true));
+		error_log('metabox for rubric author: '.print_r($post->post_author,true));
+		if (is_admin()) {
+			echo '<input type="text" name="rubric_evaluation_instructor_grade" value="">';
+		}
+	}
 
     /** 
      * Print the Section text
@@ -113,20 +133,63 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     	echo "<table class='spreadsheet'><tr><th>".__('Students', 'ctlt_rubric_evaluation')."</th>";
     	
     	//columns
-    	$colomn_name = array_keys($this->rubric['rubric_evaluation_rubric_name']);
-    	foreach ($colomn_name as $cols) {
+    	$column_name = array_keys($this->rubric['rubric_evaluation_rubric_name']);
+    	foreach ($column_name as $cols) {
     		echo '<th>'.$cols.'</th>'; 
     		
     	}
-    	echo "<th>".__('Total', 'ctlt_rubric_evaluation')."</tr>\n";
+//     	echo "<th>".__('Total', 'ctlt_rubric_evaluation')."</th>\n";
+    	echo '</tr>';
     	
     	//rows
-    	foreach ($this->students as $key => $student_info) {
-    		echo '<tr><td><a href="#id='.$student_info->ID.'">'.$student_info->display_name.'</a></td>';
-    		foreach ($colomn_name as $mark) {
-    			echo '<td>00</td>';
+    	foreach ($this->students as $row => $student_info) {
+    		//need to make the linkc
+    		$user_link = $student_info->display_name;
+    		if (is_admin()) {
+    			$user_link = '<a href="/wp-admin/user-edit.php?user_id='.$student_info->ID.'">'.$student_info->display_name.'</a>';
     		}
-    		echo '<td>00</td>';
+    		echo '<tr><td>'.$user_link.'</td>';
+    		foreach ($column_name as $col => $mark) {
+    			$id_name = 'rubric_evaluation_spreadsheet_value_'.($row + 1).'_'.($col + 1);
+    			$value = 'a';
+    			
+    			//get postID
+    			//@TODO: need to make more generic, page or posts or custom_type
+    			//@thanks http://www.webdevdoor.com/wordpress/get-posts-custom-taxonomies-terms/
+    			$args = array(
+    				'tax_query' => array(
+    					array(
+    						'taxonomy' => 'ctlt_rubric_evaluation',
+    						'field' => 'name',
+    						'terms' => array($column_name[($col)])
+    					)
+    				)
+    			);
+    			$posts_array = get_posts($args);
+//     			error_log('col: '.print_r($column_name[($col)], true));
+//     			error_log('posts array: '.print_r($posts_array, true));
+//     			error_log('authors: '.print_r($this->students,true));
+    			$post_id = 0;
+    			$post_url = '#na';
+    			$post_title = __('Not Completed', 'ctlt_rubric_evaluation');
+    			$author = $this->students[$row];
+    			$author_id = $author->ID;
+    			foreach ($posts_array as $post_info) {
+    				if ($post_info->post_author == $author_id) {
+    					$post_id = $post_info->ID;
+    					$post_url = wp_get_shortlink($post_id, 'post'); 
+    					$post_title = $post_info->post_title;
+    				}
+    			}
+    			echo '<td>';
+    			if ($post_id == 0) {
+    				echo $post_title;
+    			} else {
+    				echo '<a href="'.$post_url.'">'.$post_title.'</a>';
+    			}
+//     			echo '<input type="text" id="'.$id_name.'" name="rubric_evaluation_spreadsheet_name['.$id_name.']" value="'.$value.'">';
+    			echo '</td>';
+    		}
     		echo '</tr>';
     			
     	}

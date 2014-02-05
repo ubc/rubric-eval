@@ -4,23 +4,28 @@
  * help with multi-section on one page with: http://www.mendoweb.be/blog/wordpress-settings-api-multiple-sections-on-same-page/
  * create tabs with: http://wp.tutsplus.com/tutorials/theme-development/the-complete-guide-to-the-wordpress-settings-api-part-5-tabbed-navigation-for-your-settings-page/
  * @author loongchan
+ * 
  * TODO:
- *
- * - do uninstall or disable plugin functions
  * - link to spreadsheet via anchor for type column names
  * - need to display grades
  * - need a way to enter grades
  * - need a way to edit taxonomy on edit/create post page into radio button
  * - think about forcing usage of evaluate plugin
- * - need to add filter for posts/page list pages 
  * - deal with mu stuff.....
  * - deal with language stuff.....
  * - add datepicker for due date / extended date
  * - hide student weight for now?
+ * - need to setup DB
+ * - need to uninstall DB in uninstall.php
  *
+ * PARTIALLY DONE:
+ * - do uninstall or disable plugin functions - partially done, need to deal with page
+ * - need to add filter for posts/page list pages - done, but just for posts 
+ * 
  * DONE:
  * - check that taxonomy is removed as per removal of rows! - done!
  * - start fleshing out spreadsheet - just the look, need to add data
+ *
  */
 class CTLT_Rubric_Evaluation_Admin
 {
@@ -29,7 +34,7 @@ class CTLT_Rubric_Evaluation_Admin
      */
 	const MAX_ROWS = 20;
 	const MAX_GRADES_DROPPED = 5;
-	const TAXONOMY_NAME = 'ctlt_rubric_evaluation';
+	const TAXONOMY_NAME = 'ctlt_rubric_evaluation';	//also hardcoded into uninstall.php
     private $options;
     private $active_tab;
     private $rubric_headers = array();
@@ -52,14 +57,11 @@ class CTLT_Rubric_Evaluation_Admin
         add_action( 'admin_menu', array( $this, 'rubric_evaluation_menu' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
         add_action( 'init', array( $this, 'create_taxonomy' ) );
-
-//         $l = wp_list_categories(array('taxonomy' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
-//         error_log('wp-list-cats: '.print_r($l, true));
-//         $tax = get_taxonomies(array('name' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
-//         $taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
-//         error_log('tax: '.print_r($tax,true));
-//         error_log('taxterms: '.print_r($taxterms,true));
-
+		add_filter('posts_where', array( $this, 'modify_posts_bulk_action'));
+        
+        //filter posts....
+        add_action('restrict_manage_posts', array($this, 'add_rubric_dropdown'));
+        
         //register scripts
         wp_register_script('CTLT_Rubric_Evaluation_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_evaluation.js', array('jquery'));
         wp_register_style('CTLT_Rubric_Evaluation_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_evaluation.css');
@@ -221,18 +223,40 @@ class CTLT_Rubric_Evaluation_Admin
     				'hierarchical'               => false,
     				'public'                     => true,
     				'show_ui'                    => true,
-    				'show_admin_column'          => true,
+    				'show_admin_column'          => false,
    					'show_in_nav_menus'          => false,
    					'show_tagcloud'              => true,
 			);
-
+			
+    		//NOTE: need to change in uninstall.php as well, as it's currently hardcoded for posts only.
 			register_taxonomy( CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, 'post', $args );
 			register_taxonomy_for_object_type(CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, 'post');
 			return;
 		}
-
     }
 
+    /**
+     * function to modify list posts query
+     *
+     * @props http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
+     * @param unknown $where
+     * @return string
+     */
+    public function modify_posts_bulk_action( $where ) {
+    	$rubric_eval_id = intval($_GET['rubric_eval']);
+    
+    	//@TODO: need to make it so teachers and tas can see this???
+    	if ( is_admin()) {
+    			
+    		if ( isset( $_GET['rubric_eval'] ) && !empty( $_GET['rubric_eval'] ) && intval( $_GET['rubric_eval'] ) != 0 ) {
+    			global $wpdb;
+    			$term_id = intval( $_GET['rubric_eval'] );
+    			$where .= " AND ID IN (SELECT object_id FROM {$wpdb->term_relationships} WHERE term_taxonomy_id=$term_id )";
+    		}
+    	}
+    	return $where;
+    }
+    
     //======================================================================
     //
     // Output functions
@@ -384,6 +408,26 @@ class CTLT_Rubric_Evaluation_Admin
         }
         echo '</table>';
     }
+    
+    public function add_rubric_dropdown() {
+		//only add the dropdown if there is any terms involved!
+		//@TODO: think about whether unregister_taxonomy_for_object_type affects this?  Maybe need to check posts categories and see if custom taxonomy still there???
+		$tax = get_taxonomies(array('name' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
+		$taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
+		if (count($taxterms) && !(isset($_GET['post_type']) && $_GET['post_type'] == 'page')) {
+			$dropdown_options = array(
+				'show_option_all' => __('View all rubric eval'),
+				'hide_empty' => 0,
+				'hierarchical' => 1,
+				'show_count' => 0,
+				'orderby' => 'name',
+				'name' => 'rubric_eval',
+				'taxonomy' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME
+			);
+
+			wp_dropdown_categories($dropdown_options);
+		}
+	}
 
     //======================================================================
     //
