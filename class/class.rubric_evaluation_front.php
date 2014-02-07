@@ -60,7 +60,7 @@ class CTLT_Rubric_Evaluation_Front
 		//check if we even should display something
 		if (!is_wp_error($terms) && !empty($terms) /*&& $isLoggedin */&& is_single($post->ID) && count($terms) == 1) {
 			$term = current($terms);
-			$value = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post), $post->ID, $term->term_id, $current_user->ID); //need to pull from DB's table
+			$value = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post), $post->ID, $term->term_id); //need to pull from DB's table
 			$value = (is_null($value) ? 0 : esc_attr($value->mark));
 			
 			//now to decide what to display based on roles
@@ -74,7 +74,7 @@ class CTLT_Rubric_Evaluation_Front
 				$display .= '<input id="rubric_eval_mark_submit" type="submit" value="'.__('Submit', 'ctlt_rubric_evaluation').'">';
 				$display .= '</form>';
 			} else if ($current_user->ID == $post->post_author) {
-				$display .= '<label id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">'.$value.'</label>';
+				$display .= __( 'Mark: ', 'ctlt_rubric_evaluation').$value;
 			}
 		}
 
