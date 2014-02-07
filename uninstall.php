@@ -7,8 +7,13 @@ $taxonomy_name = 'ctlt_rubric_evaluation';
 
 $option_name = array(
 	'rubric_evaluation_rubric_name',
-	'rubric_evaluation_roles_settings'
+	'rubric_evaluation_roles_settings',
+	'rubric_evaluation_db_version'
 );
+
+global $wpdb;
+$table_name = $wpdb->prefix . "rubric_evaluation_mark";
+$sql = "DROP TABLE IF EXISTS $table_name;";
 
 // For Single site
 if ( !is_multisite() ) 
@@ -16,9 +21,8 @@ if ( !is_multisite() )
 	foreach ($option_name as $option) {
     	delete_option( $option );
 	}
-	
 	unregister_taxonomy_for_object_type($taxonomy_name, 'post');
-	
+	$wpdb->query($sql);
 } 
 // For Multisite
 else 
@@ -34,6 +38,7 @@ else
     		delete_option( $option );
 		} 
 		unregister_taxonomy_for_object_type($taxonomy_name, 'post');
+		$wpdb->query($sql);
     }
     switch_to_blog( $original_blog_id );
 

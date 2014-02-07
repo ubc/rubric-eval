@@ -20,14 +20,13 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
-
+        add_filter( 'the_content', array($this, 'front_grade_box'));
+ 
         //get student role
   		$this->_setup_author_and_options();
         $blog_id = get_current_blog_id();
         $fields = array('ID', 'user_login', 'user_nicename', 'display_name');
         $this->students = get_users(array('blog_id' => $blog_id, 'role' => $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'], 'fields' => $fields));
-    
-    	add_action('save_post', array( $this, 'save_rubric_grade'));
     }
 
     /**
@@ -70,17 +69,8 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 	        'rubric_evaluation_spreadsheet_name', // Option name
 	        array( $this, 'sanitize' ) // Sanitize
         );
-        
-        //add metabox to edit post page
-        //@TODO: need to make it more flexible by making it for posts or pages
-        if (is_admin()) {
-        	add_meta_box('rubric_evaluation_box', 'test rubric box title', array($this, 'add_rubric_metabox'), 'post', 'side' );
-        }
     }
-    
-    public function save_rubric_grade($post_id) {
-    	error_log('save_rubric_grade: '.print_r($_REQUEST['rubric_evaluation_instructor_grade'], true));
-    }
+
     //======================================================================
     //
     // Output functions
@@ -108,15 +98,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 			</div>
 			<?php
 	}
-	
-	public function add_rubric_metabox() {
-		global $post;
-		error_log('metabox for rubric: '.print_r($post->ID, true));
-		error_log('metabox for rubric author: '.print_r($post->post_author,true));
-		if (is_admin()) {
-			echo '<input type="text" name="rubric_evaluation_instructor_grade" value="">';
-		}
-	}
 
     /** 
      * Print the Section text
@@ -138,7 +119,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     		echo '<th>'.$cols.'</th>'; 
     		
     	}
-//     	echo "<th>".__('Total', 'ctlt_rubric_evaluation')."</th>\n";
     	echo '</tr>';
     	
     	//rows
@@ -166,9 +146,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     				)
     			);
     			$posts_array = get_posts($args);
-//     			error_log('col: '.print_r($column_name[($col)], true));
-//     			error_log('posts array: '.print_r($posts_array, true));
-//     			error_log('authors: '.print_r($this->students,true));
     			$post_id = 0;
     			$post_url = '#na';
     			$post_title = __('Not Completed', 'ctlt_rubric_evaluation');
@@ -177,8 +154,17 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     			foreach ($posts_array as $post_info) {
     				if ($post_info->post_author == $author_id) {
     					$post_id = $post_info->ID;
-    					$post_url = wp_get_shortlink($post_id, 'post'); 
+    					$post_url = wp_get_shortlink($post_id, 'post');
     					$post_title = $post_info->post_title;
+    						
+    					//now add grade if applicable
+    					$term_id = get_term_by('name', $column_name[($col)], RUBRIC_EVALUATION_TAXONOMY);
+    					if (!is_null($term_id)) {
+	    					$mark = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post_info), $post_info->ID, $term_id->term_id);
+	    					if (!is_null($mark)) {
+	    						$post_title .= ' ('.esc_attr($mark->mark).')';
+	    					}
+    					}
     				}
     			}
     			echo '<td>';
@@ -187,7 +173,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     			} else {
     				echo '<a href="'.$post_url.'">'.$post_title.'</a>';
     			}
-//     			echo '<input type="text" id="'.$id_name.'" name="rubric_evaluation_spreadsheet_name['.$id_name.']" value="'.$value.'">';
     			echo '</td>';
     		}
     		echo '</tr>';

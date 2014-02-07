@@ -32,9 +32,9 @@ class CTLT_Rubric_Evaluation_Admin
     /**
      * Holds the values to be used in the fields callbacks
      */
+	const DB_VERSION = "1.0";
 	const MAX_ROWS = 20;
 	const MAX_GRADES_DROPPED = 5;
-	const TAXONOMY_NAME = 'ctlt_rubric_evaluation';	//also hardcoded into uninstall.php
     private $options;
     private $active_tab;
     private $rubric_headers = array();
@@ -58,7 +58,7 @@ class CTLT_Rubric_Evaluation_Admin
         add_action( 'admin_init', array( $this, 'page_init' ) );
         add_action( 'init', array( $this, 'create_taxonomy' ) );
 		add_filter('posts_where', array( $this, 'modify_posts_bulk_action'));
-        
+
         //filter posts....
         add_action('restrict_manage_posts', array($this, 'add_rubric_dropdown'));
         
@@ -199,7 +199,7 @@ class CTLT_Rubric_Evaluation_Admin
     
     public function create_taxonomy() {
     	//register custom taxonomy if not set
-    	if (!taxonomy_exists(CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME)) {
+    	if (!taxonomy_exists(RUBRIC_EVALUATION_TAXONOMY)) {
     		// Add new taxonomy, NOT hierarchical (like tags)
     		$labels = array(
     				'name'                       => _x( 'CTLT rubric_evaluation', 'Taxonomy General Name', 'ctlt_rubric_evaluation' ),
@@ -220,7 +220,7 @@ class CTLT_Rubric_Evaluation_Admin
     		);
     		$args = array(
     				'labels'                     => $labels,
-    				'hierarchical'               => false,
+    				'hierarchical'               => true,
     				'public'                     => true,
     				'show_ui'                    => true,
     				'show_admin_column'          => false,
@@ -229,8 +229,8 @@ class CTLT_Rubric_Evaluation_Admin
 			);
 			
     		//NOTE: need to change in uninstall.php as well, as it's currently hardcoded for posts only.
-			register_taxonomy( CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, 'post', $args );
-			register_taxonomy_for_object_type(CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, 'post');
+			register_taxonomy( RUBRIC_EVALUATION_TAXONOMY, 'post', $args );
+			register_taxonomy_for_object_type(RUBRIC_EVALUATION_TAXONOMY, 'post');
 			return;
 		}
     }
@@ -412,7 +412,7 @@ class CTLT_Rubric_Evaluation_Admin
     public function add_rubric_dropdown() {
 		//only add the dropdown if there is any terms involved!
 		//@TODO: think about whether unregister_taxonomy_for_object_type affects this?  Maybe need to check posts categories and see if custom taxonomy still there???
-		$tax = get_taxonomies(array('name' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
+		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));
 		$taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
 		if (count($taxterms) && !(isset($_GET['post_type']) && $_GET['post_type'] == 'page')) {
 			$dropdown_options = array(
@@ -422,7 +422,7 @@ class CTLT_Rubric_Evaluation_Admin
 				'show_count' => 0,
 				'orderby' => 'name',
 				'name' => 'rubric_eval',
-				'taxonomy' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME
+				'taxonomy' => RUBRIC_EVALUATION_TAXONOMY
 			);
 
 			wp_dropdown_categories($dropdown_options);
@@ -466,7 +466,7 @@ class CTLT_Rubric_Evaluation_Admin
 
     	//step 0
     	$submitted_table_types = array_keys($new_input);
-		$tax = get_taxonomies(array('name' => CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME));
+		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));
 		$taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
     	$saved_table_types = array();
     	foreach( $taxterms as $key => $term) {
@@ -476,7 +476,7 @@ class CTLT_Rubric_Evaluation_Admin
 
 		foreach ($to_be_removed_terms as $index => $name) {
 			$term_id = $taxterms[$index]->term_id;
-			$worked = wp_delete_term($term_id, CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME);
+			$worked = wp_delete_term($term_id, RUBRIC_EVALUATION_TAXONOMY);
 			if (is_wp_error($worked)) {
 				add_settings_error('rubric_evaluation_rubric', 'term_delete_failed', __('Failed to remove row(s).', 'ctlt_rubric_evaluation'));
 			}
@@ -496,7 +496,7 @@ class CTLT_Rubric_Evaluation_Admin
 			$term_description = serialize($term_description);
 			
 			//step 2
-			$added_term = wp_insert_term($input['rubric_evaluation_grading_group_field_label'], CTLT_Rubric_Evaluation_Admin::TAXONOMY_NAME, array('description' => $term_description) );
+			$added_term = wp_insert_term($input['rubric_evaluation_grading_group_field_label'], RUBRIC_EVALUATION_TAXONOMY, array('description' => $term_description) );
 
 			//now add to mucked array
 			if ( !is_wp_error($added_term) ) {
@@ -547,8 +547,34 @@ class CTLT_Rubric_Evaluation_Admin
 			}
 		}
 		return $return_value;
-	}	
+	}
+
+    //======================================================================
+    //
+    // Static functions
+    //
+    //======================================================================
+    public static function activate() {
+    	global $wpdb;
+    	require_once( ABSPATH.'wp-admin/includes/upgrade.php' );
+    	
+    	$table_name = $wpdb->prefix . RUBRIC_EVALUATION_MARK_TABLE_SUFFIX;
+    	$sql = "CREATE TABLE $table_name (
+    	id bigint(11) NOT NULL AUTO_INCREMENT,
+    	user_id bigint(11) NOT NULL,
+    	object_type varchar(40) NOT NULL,
+    	object_id bigint(11) NOT NULL,
+    	term_id bigint(11) NOT NULL,
+    	mark varchar(40) NOT NULL,
+		deleted tinyint(1) NOT NULL DEFAULT '0',
+    	created datetime,
+    	modified datetime,
+    	PRIMARY KEY  (id) );";
+    	
+    	dbDelta( $sql );
+    	add_option( 'rubric_evaluation_db_version', CTLT_Rubric_Evaluation_Admin::DB_VERSION );
+    }
 }
 
-if( is_admin() )
-    $ctlt_rubric_evaluation_settings = new CTLT_Rubric_Evaluation_Admin();
+//I don't wrap around via is_admin because need to register taxonomy????
+$ctlt_rubric_evaluation_settings = new CTLT_Rubric_Evaluation_Admin();

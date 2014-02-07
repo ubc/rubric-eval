@@ -17,7 +17,7 @@ class CTLT_Rubric_Evaluation_Dashboard_Widget {
 	}
 	
 	public function output_widget() {
-		echo 'blah, blah, blah... need to create lists and display all pretty.';
+		echo 'Once DB Table setup, and grades saved, we can display appropriate data based on roles (Teacher/TA/Student).';
 	}
 }
 

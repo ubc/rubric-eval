@@ -16,10 +16,15 @@ if ( ! defined( 'ABSPATH' ) )
 		
 define('RUBRIC_EVALUATION_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('RUBRIC_EVALUATION_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('RUBRIC_EVALUATION_MARK_TABLE_SUFFIX', 'rubric_evaluation_mark');
+define('RUBRIC_EVALUATION_TAXONOMY', 'ctlt_rubric_evaluation');
 
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_admin.php');	//settings page
+require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_front.php');	//mark interactions
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_spreadsheet.php');	//grades
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_dashboard_widget.php');	//dashboard widget
 
+
+register_activation_hook(__FILE__, array('CTLT_Rubric_Evaluation_Admin', 'activate'));
 //TODO: need to regsiter deactivation and deletion hook to clean up stuff, like options, taxonomies
 //TODO: need to add settings to plugins page
