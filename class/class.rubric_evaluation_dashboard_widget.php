@@ -17,7 +17,27 @@ class CTLT_Rubric_Evaluation_Dashboard_Widget {
 	}
 	
 	public function output_widget() {
-		echo 'Once DB Table setup, and grades saved, we can display appropriate data based on roles (Teacher/TA/Student).';
+		//get roles
+		$roles = get_option('rubric_evaluation_roles_settings');
+		$teacher = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
+		$student = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
+		$ta = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
+		$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
+		
+		$output = 'Once DB Table setup, and grades saved, we can display appropriate data based on roles (Teacher/TA/Student).';
+		
+		if (isset($student) && ( $user == $student )) {
+ 			//student
+			$output = "(Student) Put student's own work and grades";
+		} elseif (isset($ta) && ( $user == $ta )) {
+			//ta
+			$output = "(TA) Put maybe something like teacher's stuff?";
+		} elseif (isset($teacher) && ( $user == $teacher )) {
+			//teacher
+			$output = "(Teacher) Put in something like mini spreadsheet or who has done / not done etc.";
+		} 
+
+		echo $output;
 	}
 }
 

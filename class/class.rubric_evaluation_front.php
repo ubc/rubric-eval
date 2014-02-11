@@ -58,13 +58,18 @@ class CTLT_Rubric_Evaluation_Front
 		$display = '';
 
 		//check if we even should display something
-		if (!is_wp_error($terms) && !empty($terms) /*&& $isLoggedin */&& is_single($post->ID) && count($terms) == 1) {
+		if (!is_wp_error($terms) && !empty($terms) && $isLoggedin && is_single($post->ID) && count($terms) == 1) {
 			$term = current($terms);
 			$value = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post), $post->ID, $term->term_id); //need to pull from DB's table
 			$value = (is_null($value) ? 0 : esc_attr($value->mark));
 			
-			//now to decide what to display based on roles
-			if (current_user_can('activate_plugins')) {	//admin, but might need to make it more flexible??
+			$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
+			$roles = get_option('rubric_evaluation_roles_settings');
+			$teacher = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
+			$student = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
+			$ta = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
+			
+			if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
 				$display .= '<form method="post" id="rubric_eval_form" action=""><label for="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">'.__('Mark', 'ctlt_rubric_evaluation').'</label>';
 				$display .= '<input type="text" id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" value="'.$value.'">';
 				$display .= '<input type="hidden" name="post_id" value="'.$post->ID.'">';
@@ -73,8 +78,10 @@ class CTLT_Rubric_Evaluation_Front
 				$display .= wp_nonce_field(CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'_'.get_post_type($post).'_'.$term->term_id.'_'.$post->ID);
 				$display .= '<input id="rubric_eval_mark_submit" type="submit" value="'.__('Submit', 'ctlt_rubric_evaluation').'">';
 				$display .= '</form>';
-			} else if ($current_user->ID == $post->post_author) {
+			} elseif (isset($student) && ( $user == $student ) && $current_user->ID == $post->post_author) {
+				$display .= '<div class="rubric_eval_show_mark">';
 				$display .= __( 'Mark: ', 'ctlt_rubric_evaluation').$value;
+				$display .= '</div>';
 			}
 		}
 

@@ -15,8 +15,9 @@
  * - deal with language stuff.....
  * - add datepicker for due date / extended date
  * - hide student weight for now?
- * - need to setup DB
+ * - need to customize dashboard for various roles.... including spreadsheet! 
  * - need to uninstall DB in uninstall.php
+ * - detach taxonomy with everything else and add custom metabox to page/post/etc manually
  *
  * PARTIALLY DONE:
  * - do uninstall or disable plugin functions - partially done, need to deal with page
@@ -25,6 +26,7 @@
  * DONE:
  * - check that taxonomy is removed as per removal of rows! - done!
  * - start fleshing out spreadsheet - just the look, need to add data
+ * - need to setup DB - done
  *
  */
 class CTLT_Rubric_Evaluation_Admin
@@ -72,15 +74,25 @@ class CTLT_Rubric_Evaluation_Admin
      * Add rubric_evaluation settings page
      */
     public function rubric_evaluation_menu() {
-    	//add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
-    	add_menu_page(
-	    	_x('Rubric Evaluation', 'page title', 'ctlt_rubric_evaluation'), //page title
-	    	_x('Rubric Eval', 'menu title', 'ctlt_rubric_evaluation'), //menu title
-	    	'activate_plugins', //capability
-	    	'rubric_evaluation_settings', //slug
-	    	array( $this, 'create_rubric_evaluation_settings_page'), //output callback
-	    	'dashicons-book' //icon
-    	);
+    	$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
+    	$teacher = $this->options['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
+    	$student = $this->options['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
+    	$ta = $this->options['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
+    	
+    	if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
+    		//add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+    		add_menu_page(
+	    		_x('Rubric Evaluation', 'page title', 'ctlt_rubric_evaluation'), //page title
+	    		_x('Rubric Eval', 'menu title', 'ctlt_rubric_evaluation'), //menu title
+	    		CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_capability_for_role($user), //capability
+	    		'rubric_evaluation_settings', //slug
+	    		array( $this, 'create_rubric_evaluation_settings_page'), //output callback
+	    		'dashicons-book' //icon
+    		);
+    	} elseif (isset($student) && ( $user == $student )) {
+			// do nothing???
+			//we don't want to show anything becuase students cannot do things!
+    	}
     }
 
     public function setup_options() {
@@ -92,10 +104,16 @@ class CTLT_Rubric_Evaluation_Admin
     	}
     	
     	$rubric_evaluation_roles_settings = get_option('rubric_evaluation_roles_settings');
-    	if ($rubric_evaluation_rubric_name !== false && !empty($rubric_evaluation_roles_settings)) {
-    		$this->options[reset(array_keys($rubric_evaluation_roles_settings))] = $rubric_evaluation_roles_settings[reset(array_keys($rubric_evaluation_roles_settings))];
+    	if ($rubric_evaluation_roles_settings !== false && !empty($rubric_evaluation_roles_settings)) {
+			$this->options[reset(array_keys($rubric_evaluation_roles_settings))] = $rubric_evaluation_roles_settings[reset(array_keys($rubric_evaluation_roles_settings))];
     	} else {
-    		$this->options['rubric_evaluation_roles_settings'] = array();
+    		//set to default!  Should only be done when first installed
+    		$this->options['rubric_evaluation_roles_settings'] = array('rubric_evaluation_role_settings' => array(
+    			'rubric_evaluation_role_ta' => 'editor',
+    			'rubric_evaluation_role_student' => 'author',
+    			'rubric_evaluation_role_teacher' => 'administrator',
+    		));
+    		add_option('rubric_evaluation_roles_settings', $this->options['rubric_evaluation_roles_settings']);
     	}
     }
 
@@ -156,6 +174,18 @@ class CTLT_Rubric_Evaluation_Admin
     }
     
     public function setup_roles_section() {
+		//get initial roles for various roles
+    	$ta = (isset($this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta']) ? 
+	    	$this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'] :
+	    	'editor');
+    	$student = (isset($this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student']) ? 
+	    	$this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'] :
+	    	'author');
+    	$teacher = (isset($this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher']) ? 
+	    	$this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] :
+	    	'administrator');
+    	
+    	//settings API display fields
     	add_settings_section(
 	    	'rubric_evaluation_section_roles',
 	    	__('Role Assignment', 'ctlt_rubric_evaluation'),
@@ -169,7 +199,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array( $this, 'output_roles'),
 	    	'rubric_evaluation_settings_role', // Page
 	    	'rubric_evaluation_section_roles', // Section
-	    	array('rubric_evaluation_role_teacher', $this->_get_role('rubric_evaluation_role_teacher', 'administrator'), 'disabled')
+	    	array('rubric_evaluation_role_teacher', $this->_get_role('rubric_evaluation_role_teacher', $teacher), 'disabled')
     	);
     	
     	add_settings_field(
@@ -178,7 +208,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array( $this, 'output_roles'),
 	    	'rubric_evaluation_settings_role', // Page
 	    	'rubric_evaluation_section_roles', // Section
-	    	array('rubric_evaluation_role_ta', $this->_get_role('rubric_evaluation_role_ta', 'editor'))
+	    	array('rubric_evaluation_role_ta', $this->_get_role('rubric_evaluation_role_ta', $ta))
     	);
     	
     	add_settings_field(
@@ -187,7 +217,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array( $this, 'output_roles'),
 	    	'rubric_evaluation_settings_role', // Page
 	    	'rubric_evaluation_section_roles', // Section
-	    	array('rubric_evaluation_role_student', $this->_get_role('rubric_evaluation_role_student', 'author'))
+	    	array('rubric_evaluation_role_student', $this->_get_role('rubric_evaluation_role_student', $student))
     	);
     	 
     	register_setting(
@@ -519,6 +549,10 @@ class CTLT_Rubric_Evaluation_Admin
     	foreach($input as $role => $selected_role) {
     		$new_input[$role] = $selected_role;
     	}
+    	
+    	//hardcode teacher to admin for now.....
+    	$new_input['rubric_evaluation_role_teacher'] = 'administrator';
+    	
 //     	error_log('sanitize role input: '.print_r($input, true));
 //     	error_log('sanitize role new_input: '.print_r($new_input, true));
     	return array('rubric_evaluation_roles_settings' => $new_input);
@@ -548,32 +582,6 @@ class CTLT_Rubric_Evaluation_Admin
 		}
 		return $return_value;
 	}
-
-    //======================================================================
-    //
-    // Static functions
-    //
-    //======================================================================
-    public static function activate() {
-    	global $wpdb;
-    	require_once( ABSPATH.'wp-admin/includes/upgrade.php' );
-    	
-    	$table_name = $wpdb->prefix . RUBRIC_EVALUATION_MARK_TABLE_SUFFIX;
-    	$sql = "CREATE TABLE $table_name (
-    	id bigint(11) NOT NULL AUTO_INCREMENT,
-    	user_id bigint(11) NOT NULL,
-    	object_type varchar(40) NOT NULL,
-    	object_id bigint(11) NOT NULL,
-    	term_id bigint(11) NOT NULL,
-    	mark varchar(40) NOT NULL,
-		deleted tinyint(1) NOT NULL DEFAULT '0',
-    	created datetime,
-    	modified datetime,
-    	PRIMARY KEY  (id) );";
-    	
-    	dbDelta( $sql );
-    	add_option( 'rubric_evaluation_db_version', CTLT_Rubric_Evaluation_Admin::DB_VERSION );
-    }
 }
 
 //I don't wrap around via is_admin because need to register taxonomy????
