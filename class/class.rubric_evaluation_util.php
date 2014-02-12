@@ -2,7 +2,7 @@
 
 define('RUBRIC_EVALUATION_MARK_TABLE_SUFFIX', 'rubric_evaluation_mark');
 define('RUBRIC_EVALUATION_TAXONOMY', 'ctlt_rubric_evaluation');
-
+define('RUBRIC_EVALUATION_COLUMN_KEY', 'rubric_eval_column');
 
 class CTLT_Rubric_Evaluation_Util {
 	
@@ -23,6 +23,10 @@ class CTLT_Rubric_Evaluation_Util {
 		$user = new WP_User(get_current_user_id($user_id));
 		$user_role = $user->roles;
 
+		if (is_super_admin()) {
+			return 'administrator';
+		}
+		
 		return reset($user_role);
 	}
 	
@@ -67,6 +71,7 @@ class CTLT_Rubric_Evaluation_Util {
 	 * 
 	 * @param string $role
 	 * @return if true, string.  if an error is produced, returns false
+	 * @NOTE: need to manually modify for custom roles and permissions...
 	 */
 	public static function ctlt_rubric_get_capability_for_role($role = 'author') {
 		$valid_roles = array('subscriber', 'contributer', 'author', 'editor', 'section_editor', 'administration');

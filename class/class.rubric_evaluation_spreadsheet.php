@@ -159,10 +159,12 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     	echo '</tr>';
     	
     	//rows
+    	$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
+    	$teacher = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
     	foreach ($this->students as $row => $student_info) {
-    		//need to make the linkc
+    		//need to make the link show up ONLY for teachers so they can edit students or tas
     		$user_link = $student_info->display_name;
-    		if (current_user_can('activate_plugins')) {
+    		if (isset($teacher) && ( $user == $teacher )) {
     			$user_link = '<a href="/wp-admin/user-edit.php?user_id='.$student_info->ID.'">'.$student_info->display_name.'</a>';
     		}
     		echo '<tr><td>'.$user_link.'</td>';
