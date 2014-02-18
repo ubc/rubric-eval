@@ -4,7 +4,7 @@
   Plugin URI: http://localhost/rubric_evaluation
   Version: 0.1
   Text Domain: ctlt_rubric_evaluation
-  Description: Creates simple LMS
+  Description: Creates simple way to track people's posts and pages for marks
   Author: CTLT, loongchan
   Author URI: http://ctlt.ubc.ca
   Licence: GPLv2
@@ -17,6 +17,9 @@ if ( ! defined( 'ABSPATH' ) )
 
 define('RUBRIC_EVALUATION_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('RUBRIC_EVALUATION_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('RUBRIC_EVALUATION_MARK_TABLE_SUFFIX', 'rubric_evaluation_mark');
+define('RUBRIC_EVALUATION_TAXONOMY', 'ctlt_rubric_evaluation');
+define('RUBRIC_EVALUATION_COLUMN_KEY', 'rubric_eval_column');
 
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_util.php');	//utils consts, functions, etc should be first
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_admin.php');	//settings page

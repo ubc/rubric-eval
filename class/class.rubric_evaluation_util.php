@@ -1,9 +1,4 @@
 <?php 
-
-define('RUBRIC_EVALUATION_MARK_TABLE_SUFFIX', 'rubric_evaluation_mark');
-define('RUBRIC_EVALUATION_TAXONOMY', 'ctlt_rubric_evaluation');
-define('RUBRIC_EVALUATION_COLUMN_KEY', 'rubric_eval_column');
-
 class CTLT_Rubric_Evaluation_Util {
 	
 	/**
@@ -101,6 +96,40 @@ class CTLT_Rubric_Evaluation_Util {
 			}
 		}
 		return $return_value;
+	}
+	
+	/**
+	 * Retrieves the terms for a speciric post type
+	 * 
+	 * @param string $post_type
+	 * @return multitype:Ambigous <multitype:, WP_Error, mixed, string, NULL>
+	 */
+	public static function ctlt_rubric_get_terms_for($post_type = 'post') {
+		$terms = get_terms(array(RUBRIC_EVALUATION_TAXONOMY), array('hide_empty' => false));
+		$return_value = array();
+		foreach ($terms as $term) {
+			$deserialized_info = unserialize(base64_decode($term->description));
+			if ($deserialized_info['posttype'] == $post_type) {
+				$return_value[] = $term;
+			}
+		}
+		return $return_value;
+	}
+	
+	/**
+	 * converts description encoded term description into useful array
+	 * 
+	 * @param unknown Object|string
+	 * @return array
+	 */
+	public static function ctlt_rubric_get_term_meta($term) {
+		if (is_string($term)) {
+			$deserialize_info = unserialize(base64_decode($term));
+			return $deserialize_info;
+		} else if (is_object($term)) {
+			$deserialize_info = unserialize(base64_decode($term->description));
+			return $deserialize_info;
+		}
 	}
 	
 	/**

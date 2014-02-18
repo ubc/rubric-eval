@@ -152,12 +152,13 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     		$column_name = array_keys($this->rubric['rubric_evaluation_rubric_name']);
     	} 
 
+    	$terms = array();
     	foreach ($column_name as $cols) {
     		echo '<th>'.$cols.'</th>'; 
-    		
+    		$terms[$cols] = get_term_by('name', $cols, RUBRIC_EVALUATION_TAXONOMY);
     	}
     	echo '</tr>';
-    	
+
     	//rows
     	$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
     	$teacher = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
@@ -171,11 +172,15 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     		foreach ($column_name as $col => $mark) {
     			$id_name = 'rubric_evaluation_spreadsheet_value_'.($row + 1).'_'.($col + 1);
     			$value = 'a';
-    			
-    			//get postID
+    			$term = $terms[$mark];
+    			$term_description = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_term_meta($term);
+
+       			//get postID
     			//@TODO: need to make more generic, page or posts or custom_type
     			//@thanks http://www.webdevdoor.com/wordpress/get-posts-custom-taxonomies-terms/
     			$args = array(
+    				'post_type' => $term_description['posttype'],
+    				'numberposts' => CTLT_Rubric_Evaluation_Admin::MAX_ROWS,
     				'tax_query' => array(
     					array(
     						'taxonomy' => 'ctlt_rubric_evaluation',
@@ -184,7 +189,21 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     					)
     				)
     			);
-    			$posts_array = get_posts($args);
+    			$posts_array = array();
+    			if ($term_description['posttype'] != 'page') {
+					$posts_array = get_posts($args);
+				} else {
+					//page, so we need to filter it still....
+					$page_array = get_pages($args);
+					foreach($page_array as $page) {
+						$page_terms = wp_get_object_terms($page->ID, RUBRIC_EVALUATION_TAXONOMY);
+						if (!empty($page_terms)) {
+							$posts_array[] = $page;
+							break;
+						}
+					}
+				}
+    			  			
     			$post_id = 0;
     			$post_url = '#na';
     			$post_title = __('Not Completed', 'ctlt_rubric_evaluation');
@@ -197,12 +216,9 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     					$post_title = $post_info->post_title;
     						
     					//now add grade if applicable
-    					$term_id = get_term_by('name', $column_name[($col)], RUBRIC_EVALUATION_TAXONOMY);
-    					if (!is_null($term_id)) {
-	    					$mark = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post_info), $post_info->ID, $term_id->term_id);
-	    					if (!is_null($mark)) {
-	    						$post_title .= ' ('.esc_attr($mark->mark).')';
-	    					}
+    					$mark = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post_info), $post_info->ID, $term->term_id);
+    					if (!is_null($mark)) {
+    						$post_title .= ' ('.esc_attr($mark->mark).')';
     					}
     				}
     			}

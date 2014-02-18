@@ -23,13 +23,13 @@ class CTLT_Rubric_Evaluation_Front
 		$post_parameters = array();
 		$current_user_id = get_current_user_id();
 		parse_str($_POST['data'], $post_parameters);
-		$return_result = '';
+		$return_result = __('Mark was not saved.  Please refresh the page and try again.', 'ctlt_rubric_evaluation');
 		$verify = wp_verify_nonce($post_parameters['_wpnonce'], CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'_'.$post_parameters['post_type'].'_'.$post_parameters['term_id'].'_'.$post_parameters['post_id']);
 		if ($verify) {
-			$return_result = __('Mark was saved!', 'ctlt_rubric_evaluation');
 			$saved = $this->_save_value(get_current_user_id(), $post_parameters['post_type'], $post_parameters['post_id'], $post_parameters['term_id'], $post_parameters['rubric_eval_mark']);
-		} else {
-			$return_result = __('Mark was not saved.  Please refresh the page and try again.', 'ctlt_rubric_evaluation');
+			if ($saved) {
+				$return_result = __('Mark was saved!', 'ctlt_rubric_evaluation');
+			}
 		}
 
 		echo $return_result;
@@ -50,24 +50,23 @@ class CTLT_Rubric_Evaluation_Front
 	 */
 	public function front_grade_box($content) {
 		global $post;
-
 		$current_user = wp_get_current_user();
 		$isLoggedin = is_user_logged_in();
 		$terms = wp_get_post_terms($post->ID, array('ctlt_rubric_evaluation'));
 
 		$display = '';
-
+		
 		//check if we even should display something
-		if (!is_wp_error($terms) && !empty($terms) && $isLoggedin && is_single($post->ID) && count($terms) == 1) {
-			$term = current($terms);
+		if (!is_wp_error($terms) && !empty($terms) && $isLoggedin && is_singular() && count($terms) == 1) {
+			$term = reset($terms);
 			$value = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post), $post->ID, $term->term_id); //need to pull from DB's table
 			$value = (is_null($value) ? 0 : esc_attr($value->mark));
-			
+		
 			$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
 			$roles = get_option('rubric_evaluation_roles_settings');
-			$teacher = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
-			$student = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
-			$ta = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
+			$teacher = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
+			$student = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
+			$ta = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
 			
 			if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
 				$display .= '<form method="post" id="rubric_eval_form" action=""><label for="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">'.__('Mark', 'ctlt_rubric_evaluation').'</label>';
@@ -78,7 +77,7 @@ class CTLT_Rubric_Evaluation_Front
 				$display .= wp_nonce_field(CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'_'.get_post_type($post).'_'.$term->term_id.'_'.$post->ID);
 				$display .= '<input id="rubric_eval_mark_submit" type="submit" value="'.__('Submit', 'ctlt_rubric_evaluation').'">';
 				$display .= '</form>';
-			} elseif (isset($student) && ( $user == $student ) && $current_user->ID == $post->post_author) {
+			} elseif (isset($student) && ( $user == $student ) && $current_user->ID == $post->post_author) {				
 				$display .= '<div class="rubric_eval_show_mark">';
 				$display .= __( 'Mark: ', 'ctlt_rubric_evaluation').$value;
 				$display .= '</div>';
@@ -126,7 +125,7 @@ class CTLT_Rubric_Evaluation_Front
 		global $wpdb;
 		
 		if (empty($user_id) || empty($object_type) || empty($object_id) || empty($term_id) || empty($mark)) {
-			return '';
+			return false;
 		}
 		
 		$table_name = $wpdb->prefix . RUBRIC_EVALUATION_MARK_TABLE_SUFFIX;
