@@ -31,9 +31,9 @@ class CTLT_Rubric_Evaluation_Spreadsheet
      */
     public function add_plugin_page() {
     	$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
-    	$teacher = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
-    	$student = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
-    	$ta = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
+    	$teacher = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
+    	$student = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
+    	$ta = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
 
     	if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
     		//add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function );
@@ -92,7 +92,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
          * NOTE: done here because in construct too early!
          */
         $user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
-        $student = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
+        $student = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
         if (isset($student) && ( $user == $student )) {
         	$current_user_id = get_current_user_id();
         	foreach ($this->students as $per_student) {	
@@ -157,11 +157,12 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     		echo '<th>'.$cols.'</th>'; 
     		$terms[$cols] = get_term_by('name', $cols, RUBRIC_EVALUATION_TAXONOMY);
     	}
+    	echo '<th>'.__('Total', 'ctlt_rubric_evaluation').'</th>';
     	echo '</tr>';
 
     	//rows
     	$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
-    	$teacher = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
+    	$teacher = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
     	foreach ($this->students as $row => $student_info) {
     		//need to make the link show up ONLY for teachers so they can edit students or tas
     		$user_link = $student_info->display_name;
@@ -230,6 +231,10 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     			}
     			echo '</td>';
     		}
+    		//now to add total row
+    		$grade = 'n/a';
+    		echo '<td>'.$grade.'</td>';
+    		
     		echo '</tr>';
     			
     	}
@@ -279,8 +284,8 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 		if ($roles !== false) {
 			$this->roles = $roles;
 			//@TODO: temp placeholder to force teacher to have some sort of role
-			if (!isset($this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'])) {
-				$this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] = 'administrator';
+			if (!isset($this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'])) {
+				$this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] = 'administrator';
 			}
 		}
 		
@@ -294,7 +299,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 		if ($roles !== false) { 
 			$blog_id = get_current_blog_id();
 			$fields = array('ID', 'user_login', 'user_nicename', 'display_name');
-			$this->students = get_users(array('blog_id' => $blog_id, 'role' => $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'], 'fields' => $fields));
+			$this->students = get_users(array('blog_id' => $blog_id, 'role' => $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'], 'fields' => $fields));
 		} else {
 			$this->students = array();
 		}

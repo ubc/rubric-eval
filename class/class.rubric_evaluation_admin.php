@@ -29,15 +29,14 @@
  * - need to customize dashboard for various roles - done, but need to make it show useful data
  * 
  * BUGS:
- * - page listing shows rubric eval column even if no page taxonomies!
  * 
  * 
  * DONE:
  * - need a way to enter grades - DONE
- * - check that taxonomy is removed as per removal of rows! - done!
+ * - check that taxonomy is removed as per removal of rows! - DONE!
  * - start fleshing out spreadsheet - just the look, need to add data
  * - need to setup DB - done
- *
+ * - page listing shows rubric eval column even if no page taxonomies! - FIXED
  */
 class CTLT_Rubric_Evaluation_Admin
 {
