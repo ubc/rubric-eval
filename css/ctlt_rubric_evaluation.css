@@ -17,3 +17,12 @@
 .rubric_evaluation_select {
 	width: 100px;
 }
+
+#rubric_evaluation_post .dashicons, #rubric_evaluation_page .dashicons {
+	padding-top: 3px;
+	padding-right: 4px;
+	cursor: default;
+}
+#rubric_evaluation_post .past_due, #rubric_evaluation_page .past_due {
+	cursor: default;
+}

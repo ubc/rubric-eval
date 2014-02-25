@@ -108,7 +108,7 @@ class CTLT_Rubric_Evaluation_Util {
 		$terms = get_terms(array(RUBRIC_EVALUATION_TAXONOMY), array('hide_empty' => false));
 		$return_value = array();
 		foreach ($terms as $term) {
-			$deserialized_info = unserialize(base64_decode($term->description));
+			$deserialized_info = unserialize(base64_decode($term->description)); //error_log('deserialized_info: '.print_r($deserialized_info,true));
 			if ($deserialized_info['posttype'] == $post_type) {
 				$return_value[] = $term;
 			}
@@ -157,6 +157,5 @@ class CTLT_Rubric_Evaluation_Util {
 		dbDelta( $sql );
 		add_option( 'rubric_evaluation_db_version', CTLT_Rubric_Evaluation_Admin::DB_VERSION );
 	
-	}
-	
+	}	
 }

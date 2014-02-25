@@ -62,5 +62,8 @@
 				$(this).data('selected',1).prop('checked', true);
 			}
 		});
+		
+		//now to deal with datepicker!
+		$('#rubric_evaluation_grading_group_field_duedate').datepicker();
 	 });
  })(jQuery);

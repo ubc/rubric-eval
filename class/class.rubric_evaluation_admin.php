@@ -10,7 +10,7 @@
  * - need a way to edit taxonomy on edit/create post page into radio button
  * - think about forcing usage of evaluate plugin
  * - deal with mu stuff.....
- * - deal with language stuff (make last priority)
+ * - deal with language stuff (make last priority) - LAST
  * - add datepicker for due date / extended date
  * - hide student weight for now?
  * - need to uninstall DB in uninstall.php
@@ -20,6 +20,9 @@
  * - for class.front, need to make singular check for post types pulled form admin class????  
  *
  * PARTIALLY DONE:
+ * - duedate is done on the front end for save-post.  can't create or edit a post and select term past duedate.
+ * - - need to make saving post smarter:
+ * - - - ensure that if you edit post past duedate, that it saves rubric eval term properly (don't change)
  * - do uninstall or disable plugin functions - partially done, need to deal with page
  * - need to add filter for posts/page list pages - done, but just for posts
  * - need to display grades - does display, but is not pretty right now 
@@ -85,10 +88,12 @@ class CTLT_Rubric_Evaluation_Admin
         //setup rubric_post_types... need to modularize and make extandable
         $this->rubric_post_types = array('post', 'page');
         
-        //register scripts
-        wp_register_script('CTLT_Rubric_Evaluation_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_evaluation.js', array('jquery'));
+        //register scripts (depends on google CDN!)
+        wp_register_script('CTLT_Rubric_Evaluation_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_evaluation.js', array('jquery', 'jquery-ui-datepicker'));
         wp_register_style('CTLT_Rubric_Evaluation_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_evaluation.css');
+        wp_register_style('jquery-ui-1.10.1', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/smoothness/jquery-ui.css');
         wp_enqueue_style('CTLT_Rubric_Evaluation_Css');
+        wp_enqueue_style('jquery-ui-1.10.1');
     }
 
     /**
@@ -374,6 +379,11 @@ class CTLT_Rubric_Evaluation_Admin
 				<br>
 				<input id="rubric_evaluation_grading_group_field_note" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_field_note]" value="">
 			</div>
+			<div class="grading_group_duedate">
+				<label class="rubric_evaluation_grading_group_field"><?php _e('Due Date', 'ctlt_rubric_evaluation');?></label>
+				<br>
+				<input id="rubric_evaluation_grading_group_field_duedate" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_field_duedate]" value="">
+			</div>
 			<!-- Hide this one for now as I don't think it quite makes sense -->
 			<div class="grading_group_total" style="display:none;">
 				<label class="rubric_evaluation_grading_group_field"><?php _e('% of Total', 'ctlt_rubric_evaluation');?></label>
@@ -409,10 +419,9 @@ class CTLT_Rubric_Evaluation_Admin
 					<label class="rubric_evaluation_grading_group_advanced_field"><?php _e('Post Type', 'ctlt_rubric_evaluation');?></label>
 					<br>
 					<select id="rubric_evaluation_grading_group_advanced_field_posttype" class="rubric_evaluation_select" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_advanced_field_posttype]">
-					<?php 	//<input id="rubric_evaluation_grading_group_advanced_field_posttype" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_advanced_field_posttype]" value="">
+					<?php
 						//@TODO need to figure out how to pull this stuff out.....
-						$array = array('post', 'page');
-						echo $this->_create_html_options(array_combine($array, $array), 'post');
+						echo $this->_create_html_options(array_combine($this->rubric_post_types, $this->rubric_post_types), 'post');
 					?>
 					</select>
 				</div>
@@ -595,6 +604,7 @@ class CTLT_Rubric_Evaluation_Admin
 		 * 2 find out which ones are for posts
 		 * 3 add radio button
 		 * 4 make it work with javascript to make it toggleable
+		 * 5 need to check if past duedate for that term, if so, then dont' show it
 		 */
 		$terms = $this->_get_terms_for($post->post_type);
 		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));	
@@ -605,43 +615,24 @@ class CTLT_Rubric_Evaluation_Admin
 		}
 			
 		foreach ($terms as $term) {
-			echo '<label class="rubric_evaluation_radio_label">';
+			$term_description = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_term_meta($term);
+			if (isset($term_description['duedate']) && !empty($term_description['duedate'])) {
+				if (strtotime($term_description['duedate']) > time()) {
+					echo '<label class="rubric_evaluation_radio_label">';
+					echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
+					echo $term->name;
+				} else {
+					echo '<label class="rubric_evaluation_radio_label past_due">';					
+					echo '<div class="dashicons dashicons-dismiss"></div>';
+					echo $term->name . __('(Past Due Date)', 'ctlt_rubric_evaluation');
+				}
+			}
+
 			$checked = '';
-			if ($term->term_id == $post_terms->term_id) {
+			if (!empty($post_terms) && $term->term_id == $post_terms->term_id) {
 				$checked = 'checked="checked"';
 			} 
-			echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
-			
-			echo $term->name;
-			echo '</label><br>';
-		}
-	}
-	
-	public function setup_page_metabox() {
-		global $post;
-		/**
-		 * 1 get all terms for post type
-		 * 2 find out which ones are for posts
-		 * 3 add radio button
-		 * 4 make it work with javascript to make it toggleable
-		 */
-		$terms = $this->_get_terms_for($post->post_type);
-		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));
-		$post_terms_raw = get_the_terms($post, $tax);
-		$post_terms = array();
-		if (!empty($post_terms_raw)) {
-			$post_terms = reset(get_the_terms($post, $tax));
-		}
-			
-		foreach ($terms as $term) {
-			echo '<label class="rubric_evaluation_radio_label">';
-			$checked = '';
-			if ($term->term_id == $post_terms->term_id) {
-				$checked = 'checked="checked"';
-			}
-			echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
-				
-			echo $term->name;
+
 			echo '</label><br>';
 		}
 	}
@@ -673,7 +664,6 @@ class CTLT_Rubric_Evaluation_Admin
     			}
     		}
     	}
-    	
     	/** steps to add new labels
     	 * 0. need to check for deleted stuff!
     	 * 1. check required and validate fields for new field (currently only label???)
@@ -701,22 +691,34 @@ class CTLT_Rubric_Evaluation_Admin
 
   		//step 1
     	if (isset($input['rubric_evaluation_grading_group_field_label']) && !empty($input['rubric_evaluation_grading_group_field_label'])) {
+			$has_errors = false;
+			//need to make sure that if duedate is set that it needs to be in the future!			
+			if (isset($input['rubric_evaluation_grading_group_field_duedate']) && !empty($input['rubric_evaluation_grading_group_field_duedate'])) {
+				if (time() >= strtotime($input['rubric_evaluation_grading_group_field_duedate'])) {
+					add_settings_error('rubric_evaluation_rubric', 'due_date_past', __('Please choose a due date that is in the future', 'ctlt_rubric_evaluation'));
+					$has_errors = true;
+				}
+			}
 			
 			$term_description = array(
 				'label' => $input['rubric_evaluation_grading_group_field_label'],
 				'note' => $input['rubric_evaluation_grading_group_field_note'],
 				'total' => $input['rubric_evaluation_grading_group_field_total'],
+				'duedate' => $input['rubric_evaluation_grading_group_field_duedate'],
 				'droptop' => $input['rubric_evaluation_grading_group_advanced_field_droptop'],
-				'dropbottom' => $input['rubric_evaluation_grading_group_advanced_field_droptop'],
+				'dropbottom' => $input['rubric_evaluation_grading_group_advanced_field_dropbottom'],
 				'posttype' => $input['rubric_evaluation_grading_group_advanced_field_posttype']
 			);
 			$term_description = base64_encode(serialize($term_description));
 			
 			//step 2
-			$added_term = wp_insert_term($input['rubric_evaluation_grading_group_field_label'], RUBRIC_EVALUATION_TAXONOMY, array('description' => $term_description) );
+			$added_term = '';
+			if (!$has_errors) {
+				$added_term = wp_insert_term($input['rubric_evaluation_grading_group_field_label'], RUBRIC_EVALUATION_TAXONOMY, array('description' => $term_description) );
+			}
 
 			//now add to mucked array
-			if ( !is_wp_error($added_term) ) {
+			if (!empty($added_term) && !is_wp_error($added_term) ) {
 				//step 3
 				foreach (range(1, sizeof($this->rubric_headers)) as $column) {
 	    			$new_input[$input['rubric_evaluation_grading_group_field_label']][$this->rubric_headers[($column - 1)]] = 0;
