@@ -175,18 +175,17 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     			$value = 'a';
     			$term = $terms[$mark];
     			$term_description = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_term_meta($term);
-
-       			//get postID
+				
+				//get postID
     			//@TODO: need to make more generic, page or posts or custom_type
     			//@thanks http://www.webdevdoor.com/wordpress/get-posts-custom-taxonomies-terms/
     			$args = array(
     				'post_type' => $term_description['posttype'],
-    				'numberposts' => CTLT_Rubric_Evaluation_Admin::MAX_ROWS,
     				'tax_query' => array(
     					array(
-    						'taxonomy' => 'ctlt_rubric_evaluation',
-    						'field' => 'name',
-    						'terms' => array($column_name[($col)])
+    						'taxonomy' => RUBRIC_EVALUATION_TAXONOMY,
+    						'field' => 'slug',
+    						'terms' => array($term->slug)
     					)
     				)
     			);
@@ -204,7 +203,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 						}
 					}
 				}
-    			  			
+
     			$post_id = 0;
     			$post_url = '#na';
     			$post_title = __('Not Completed', 'ctlt_rubric_evaluation');

@@ -612,8 +612,15 @@ class CTLT_Rubric_Evaluation_Admin
 		if (!empty($post_terms_raw)) {	
 			$post_terms = reset(get_the_terms($post, $tax));
 		}
-			
+	
 		foreach ($terms as $term) {
+			//determined whether we should have what checked....
+			$checked = '';
+			if (!empty($post_terms) && $term->term_id == $post_terms->term_id) {
+				$checked = 'checked="checked"';
+			}
+			
+			//takes into consideration duedate if set
 			$term_description = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_term_meta($term);
 			if (isset($term_description['duedate']) && !empty($term_description['duedate'])) {
 				if (strtotime($term_description['duedate']) > time()) {
@@ -625,12 +632,12 @@ class CTLT_Rubric_Evaluation_Admin
 					echo '<div class="dashicons dashicons-dismiss"></div>';
 					echo $term->name . __('(Past Due Date)', 'ctlt_rubric_evaluation');
 				}
+			} else {
+				echo '<label class="rubric_evaluation_radio_label">';
+				echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
+				echo $term->name;
 			}
 
-			$checked = '';
-			if (!empty($post_terms) && $term->term_id == $post_terms->term_id) {
-				$checked = 'checked="checked"';
-			} 
 
 			echo '</label><br>';
 		}
