@@ -34,7 +34,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     	$teacher = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
     	$student = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
     	$ta = $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
-
     	if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
     		//add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function );
     		add_submenu_page(
@@ -45,7 +44,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 	    		'rubric_evaluation_subpage_settings',
 	    		array( $this, 'create_rubric_evaluate_page')
     		);
-    		
     	} elseif (isset($student) && ( $user == $student )) {
     		//add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
     		add_menu_page(

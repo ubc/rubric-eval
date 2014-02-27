@@ -11,7 +11,6 @@
  * - think about forcing usage of evaluate plugin
  * - deal with mu stuff.....
  * - deal with language stuff (make last priority) - LAST
- * - add datepicker for due date / extended date
  * - hide student weight for now?
  * - need to uninstall DB in uninstall.php
  * - make rubric evaluation column linkable for teachers
@@ -37,6 +36,8 @@
  * - start fleshing out spreadsheet - just the look, need to add data
  * - need to setup DB - done
  * - page listing shows rubric eval column even if no page taxonomies! - FIXED
+ * - add datepicker for due date / extended date - Done (Due date only)
+ * 
  */
 class CTLT_Rubric_Evaluation_Admin
 {
@@ -50,7 +51,7 @@ class CTLT_Rubric_Evaluation_Admin
     private $active_tab;
     private $rubric_headers = array();
     private $rubric_post_types = array();	//@TODO need to flesh out
-    		
+    private $grading_types = array();
 
     /**
      * Start up
@@ -61,6 +62,11 @@ class CTLT_Rubric_Evaluation_Admin
     		__('Student Weight', 'ctlt_rubric_evaluation'),
     		__('Instructor Weight', 'ctlt_rubric_evaluation'),
     		__('Total', 'ctlt_rubric_evaluation')
+    	);
+    	
+    	$this->grading_types = array(
+    		'Text',
+    		'Dropdown'
     	);
 
         // Set class property
@@ -134,10 +140,11 @@ class CTLT_Rubric_Evaluation_Admin
     	} else {
     		//set to default!  Should only be done when first installed
     		$this->options['rubric_evaluation_roles_settings'] = array('rubric_evaluation_roles_settings' => array(
-    			'rubric_evaluation_role_ta' => 'editor',
-    			'rubric_evaluation_role_student' => 'author',
-    			'rubric_evaluation_role_teacher' => 'administrator',
-    		));
+	    			'rubric_evaluation_role_ta' => 'editor',
+	    			'rubric_evaluation_role_student' => 'author',
+	    			'rubric_evaluation_role_teacher' => 'administrator',
+    			),
+    				'rubric_evaluation_grading_type' => array('rubric_evaluation_grading_type' => 'Text'));
     		add_option('rubric_evaluation_roles_settings', array('rubric_evaluation_roles_settings' => $this->options['rubric_evaluation_roles_settings']));
     	}
     }
@@ -148,6 +155,7 @@ class CTLT_Rubric_Evaluation_Admin
     public function page_init() {
 		$this->setup_rubric_section();
 		$this->setup_roles_section();
+		$this->setup_grading_section();
 
 		//add metabox IF there are things to mark!
 		$postterms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for('post');
@@ -194,7 +202,7 @@ class CTLT_Rubric_Evaluation_Admin
     		__('Add Grading Group', 'ctlt_rubric_evaluation'), 
     		array($this, 'output_grading_group'), 
     		'rubric_evaluation_settings_rubric', 
-    		'rubric_evaluation_section_rubric'
+    		'rubric_evaluation_grading_group'
     	);
 
     	register_setting(
@@ -258,6 +266,26 @@ class CTLT_Rubric_Evaluation_Admin
     	);
     }
     
+    public function setup_grading_section() {
+    	//===============
+    	//grading type section
+    	//===============
+    	add_settings_section(
+	    	'rubric_evaluation_section_grading',
+	    	__('Grading Settings', 'ctlt_rubric_evaluation'),
+	    	array( $this, 'print_section_info'),
+	    	'rubric_evaluation_settings_role'
+    	);
+    	
+    	add_settings_field(
+	    	'rubric_evaluation_grading_value', // ID
+	    	__("Grading Type", 'output_grading'), // Title
+	    	array( $this, 'output_grading'), //Callback
+	    	'rubric_evaluation_settings_role', // Page
+	    	'rubric_evaluation_section_grading' // Section
+		);
+    }
+
     public function create_taxonomy() {
     	//register custom taxonomy if not set
     	if (!taxonomy_exists(RUBRIC_EVALUATION_TAXONOMY)) {
@@ -494,6 +522,22 @@ class CTLT_Rubric_Evaluation_Admin
 			echo $this->_create_html_options(array_combine($array_key, $array_value), reset($array_key));
 			echo '</select>';
 		}
+	}
+	
+	public function output_grading() {
+		$selected = 'Text';
+		$options = get_option('rubric_evaluation_roles_settings');
+		if (isset($options['rubric_evaluation_roles_settings']['rubric_evaluation_grading_type']['rubric_evaluation_grading_type'])) {
+			$selected = $options['rubric_evaluation_roles_settings']['rubric_evaluation_grading_type']['rubric_evaluation_grading_type'];
+		}
+		echo "<select id='rubric_evaluation_grading_type' name='rubric_evaluation_roles_settings[rubric_evaluation_grading_type]'>";
+		$keyval = array();
+		foreach ($this->grading_types as $val) {
+			$keyval[] = __($val, 'ctlt_rubric_evaluation');
+		}
+		
+		echo $this->_create_html_options(array_combine($keyval, $keyval), $selected);
+		echo "</select>";
 	}
 	
 	/**
@@ -741,15 +785,21 @@ class CTLT_Rubric_Evaluation_Admin
     
     public function sanitize_roles( $input ) {
     	$new_input = array();
+    	
     	foreach($input as $role => $selected_role) {
-    		$new_input[$role] = $selected_role;
+			if (stristr($role, 'rubric_evaluation_role_')) {
+	    		$new_input['rubric_evaluation_roles_settings'][$role] = $selected_role;
+    		} elseif (stristr($role, 'rubric_evaluation_grading_type')) {
+    			$new_input['rubric_evaluation_grading_type'][$role] = $selected_role;
+    		}
     	}
     	
     	//hardcode teacher to admin for now.....
-    	$new_input['rubric_evaluation_role_teacher'] = 'administrator';
+    	$new_input['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] = 'administrator';
     	
 //     	error_log('sanitize role input: '.print_r($input, true));
 //     	error_log('sanitize role new_input: '.print_r($new_input, true));
+//     	exit();
     	return array('rubric_evaluation_roles_settings' => $new_input);
     }
 

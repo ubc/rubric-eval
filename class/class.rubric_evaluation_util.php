@@ -69,11 +69,11 @@ class CTLT_Rubric_Evaluation_Util {
 	 * @NOTE: need to manually modify for custom roles and permissions...
 	 */
 	public static function ctlt_rubric_get_capability_for_role($role = 'author') {
-		$valid_roles = array('subscriber', 'contributer', 'author', 'editor', 'section_editor', 'administration');
+		$valid_roles = array('subscriber', 'contributer', 'author', 'editor', 'section_editor', 'administrator');
 		$return_value = false;
 		if (!empty($role) && in_array($role, $valid_roles)) {
 			switch ($role) {
-				case 'administration':
+				case 'administrator':
 					$return_value = 'activate_plugin';
 					break;
 				case 'section_editor':
@@ -95,6 +95,7 @@ class CTLT_Rubric_Evaluation_Util {
 
 			}
 		}
+
 		return $return_value;
 	}
 	
@@ -108,7 +109,7 @@ class CTLT_Rubric_Evaluation_Util {
 		$terms = get_terms(array(RUBRIC_EVALUATION_TAXONOMY), array('hide_empty' => false));
 		$return_value = array();
 		foreach ($terms as $term) {
-			$deserialized_info = unserialize(base64_decode($term->description)); //error_log('deserialized_info: '.print_r($deserialized_info,true));
+			$deserialized_info = unserialize(base64_decode($term->description));
 			if ($deserialized_info['posttype'] == $post_type) {
 				$return_value[] = $term;
 			}

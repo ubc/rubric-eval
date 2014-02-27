@@ -31,9 +31,8 @@ class CTLT_Rubric_Evaluation_Front
 				$return_result = __('Mark was saved!', 'ctlt_rubric_evaluation');
 			}
 		}
-
 		echo $return_result;
-		
+
 		die();
 	}
 
@@ -69,13 +68,20 @@ class CTLT_Rubric_Evaluation_Front
 			$ta = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
 			
 			if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
+				//we need to determine what format the input takes
+				$type_option = get_option('rubric_evaluation_roles_settings');
+				$type = $type_option['rubric_evaluation_roles_settings']['rubric_evaluation_grading_type']['rubric_evaluation_grading_type'];
 				$display .= '<form method="post" id="rubric_eval_form" action=""><label for="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">'.__('Mark', 'ctlt_rubric_evaluation').'</label>';
-				$display .= '<input type="text" id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" value="'.$value.'">';
-				$display .= '<input type="hidden" name="post_id" value="'.$post->ID.'">';
-				$display .= '<input type="hidden" name="post_type" value="'.get_post_type($post).'">';
-				$display .= '<input type="hidden" name="term_id" value="'.$term->term_id.'">';
-				$display .= wp_nonce_field(CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'_'.get_post_type($post).'_'.$term->term_id.'_'.$post->ID);
-				$display .= '<input id="rubric_eval_mark_submit" type="submit" value="'.__('Submit', 'ctlt_rubric_evaluation').'">';
+				
+				if (strcasecmp('text', $type) == 0) {
+					$display .= $this->_output_text();
+				} else if (strcasecmp('dropdown', $type) == 0) {
+					$display .= $this->_output_dropdown();
+				} else {
+					$display .= __('Please set the Grading Type again', 'ctlt_rubric_evaluation');
+				}
+				
+				$display .= '<input class="btn" id="rubric_eval_mark_submit" type="submit" value="'.__('Submit', 'ctlt_rubric_evaluation').'">';
 				$display .= '</form>';
 			} elseif (isset($student) && ( $user == $student ) && $current_user->ID == $post->post_author) {				
 				$display .= '<div class="rubric_eval_show_mark">';
@@ -119,6 +125,55 @@ class CTLT_Rubric_Evaluation_Front
 
 		$result = $wpdb->get_row( $query );
 		return $result;
+	}
+	
+	//======================================================================
+	//
+	// Private callback functions
+	//
+	//======================================================================
+	/**
+	 * @TODO need to account for if grade was set!
+	 */
+	private function _output_dropdown() {
+		global $post;
+		$terms = wp_get_post_terms($post->ID, array('ctlt_rubric_evaluation'));
+		$term = reset($terms);
+		$default = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post), $post->ID, $term->term_id); //need to pull from DB's table
+		$default = (is_null($default) ? 0 : esc_attr($default->mark));
+
+		$display = '';
+		$display .='<select class="rubric_evaluation_select" id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">';
+		foreach (array_combine(range(0, 10), range(0, 10)) as $key => $val) {
+			if ($default == $key) {
+				$display .= "<option value='$key' selected='selected'>$val</option>\n";
+			} else {
+				$display .= "<option value='$key'>$val</option>\n";
+			}
+		}
+		$display .= '</select>';
+		$display .= '<input type="hidden" name="post_id" value="'.$post->ID.'">';
+		$display .= '<input type="hidden" name="post_type" value="'.get_post_type($post).'">';
+		$display .= '<input type="hidden" name="term_id" value="'.$term->term_id.'">';
+		$display .= wp_nonce_field(CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'_'.get_post_type($post).'_'.$term->term_id.'_'.$post->ID);
+		return $display;
+	}
+	
+	private function _output_text() {
+		global $post;
+		$terms = wp_get_post_terms($post->ID, array('ctlt_rubric_evaluation'));
+		$term = reset($terms);
+		$value = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post), $post->ID, $term->term_id); //need to pull from DB's table
+		$value = (is_null($value) ? 0 : esc_attr($value->mark));
+		
+		$display = '';
+		$display .= '<input type="text" id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" value="'.$value.'">';
+		$display .= '<input type="hidden" name="post_id" value="'.$post->ID.'">';
+		$display .= '<input type="hidden" name="post_type" value="'.get_post_type($post).'">';
+		$display .= '<input type="hidden" name="term_id" value="'.$term->term_id.'">';
+		$display .= wp_nonce_field(CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'_'.get_post_type($post).'_'.$term->term_id.'_'.$post->ID);
+		
+		return $display;
 	}
 	
 	private function _save_value($user_id, $object_type, $object_id, $term_id, $mark, $deleted = 0, $created = false, $modified = false) {
