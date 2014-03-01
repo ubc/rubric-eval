@@ -16,7 +16,8 @@
  * - make rubric evaluation column linkable for teachers
  * - think about whether to make new taxonomy editable.......
  * - detach taxonomy with everything else and add custom metabox to page/post/etc manually
- * - for class.front, need to make singular check for post types pulled form admin class????  
+ * - for class.front, need to make singular check for post types pulled form admin class???? 
+ * - make list of terms ordered by duedate????? 
  *
  * PARTIALLY DONE:
  * - duedate is done on the front end for save-post.  can't create or edit a post and select term past duedate.
@@ -28,9 +29,10 @@
  * - need to customize dashboard for various roles - done, but need to make it show useful data
  * 
  * BUGS:
- * 
+ * - using quick edit on page/post, removes the rubric eval info
  * 
  * DONE:
+ * - rough out dashboard widget
  * - need a way to enter grades - DONE
  * - check that taxonomy is removed as per removal of rows! - DONE!
  * - start fleshing out spreadsheet - just the look, need to add data
@@ -63,7 +65,6 @@ class CTLT_Rubric_Evaluation_Admin
     		__('Instructor Weight', 'ctlt_rubric_evaluation'),
     		__('Total', 'ctlt_rubric_evaluation')
     	);
-    	
     	$this->grading_types = array(
     		'Text',
     		'Dropdown'

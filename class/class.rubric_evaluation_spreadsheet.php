@@ -210,7 +210,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     			foreach ($posts_array as $post_info) {
     				if ($post_info->post_author == $author_id) {
     					$post_id = $post_info->ID;
-    					$post_url = wp_get_shortlink($post_id, 'post');
+    					$post_url = wp_get_shortlink($post_id);
     					$post_title = $post_info->post_title;
     						
     					//now add grade if applicable

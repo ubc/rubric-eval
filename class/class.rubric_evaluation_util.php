@@ -157,6 +157,49 @@ class CTLT_Rubric_Evaluation_Util {
 		 
 		dbDelta( $sql );
 		add_option( 'rubric_evaluation_db_version', CTLT_Rubric_Evaluation_Admin::DB_VERSION );
-	
 	}	
+	
+	public static function ctlt_rubric_get_posts($post_type = 'post', $author = null, $hide_empty = false) {
+		if (is_array($post_type)) {
+			extract(array_merge(array(
+				'post_type' => 'post',
+				'author' => '',
+				'hide_empty' => false), $post_type));
+		}
+			
+		$all_posts = array();
+		$terms = get_terms(RUBRIC_EVALUATION_TAXONOMY, array('hide_empty' => $hide_empty));
+		foreach ($terms as $term) {
+			$args = array(
+					'tax_query' => array(
+							array(
+	    					'taxonomy' => RUBRIC_EVALUATION_TAXONOMY,
+	    					'field' => 'slug',
+	    					'terms' => array($term->slug)
+	    				)
+    				)
+			);
+			
+			//add author attribute if appropriate
+			if (!empty($author)) {
+				$args['author'] = $author;
+			}
+			if (!empty($post_type)) {
+				$post_type_array = explode(',', $post_type);
+				$args['post_type'] = $post_type_array;
+			}
+
+			$posts = get_posts($args);
+			foreach ($posts as $post) {
+				$post->post_rubric_term = $term;	//added term to post object
+				$all_posts[$term->slug] = $post;	//split posts by term->slug
+			}
+				
+			//accounts for terms without associated objects
+			if (!isset($all_posts[$term->slug])) {
+				$all_posts[$term->slug] = array();
+			}
+		}
+		return $all_posts;
+	}
 }
