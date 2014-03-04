@@ -1,24 +1,27 @@
 <?php
 class CTLT_Rubric_Evaluation_Lists
 {
-
+	private $roles;
     /**
      * Start up
      */
     public function __construct() {
+    	//setup roles
+    	$this->roles = get_option('rubric_evaluation_roles_settings');
+    	
     	//setup metaboxes
     	add_action( 'admin_init', array( $this, 'page_init' ) );
     	
         //filter posts....
         //@TODO: need to make it more flexible to not just posts, but pages, etc
-        add_action('restrict_manage_posts', array($this, 'add_rubric_dropdown'));
-        add_filter('posts_where', array( $this, 'modify_posts_bulk_action'));
-        add_filter('manage_posts_columns', array($this, 'add_rubric_column_head'));
-        add_filter('manage_pages_columns', array($this, 'add_rubric_page_column_head'));
-        add_action('manage_posts_custom_column', array($this, 'add_rubric_column_value'), 10, 2 );
-        add_action('manage_pages_custom_column', array($this, 'add_rubric_page_column_value'), 10, 2);
-        add_action('quick_edit_custom_box', array($this, 'rubric_quick_edit'), 10, 2);
-        
+		add_action('restrict_manage_posts', array($this, 'add_rubric_dropdown'));
+		add_filter('posts_where', array( $this, 'modify_posts_bulk_action'));
+		add_filter('manage_posts_columns', array($this, 'add_rubric_column_head'));
+		add_filter('manage_pages_columns', array($this, 'add_rubric_page_column_head'));
+		add_action('manage_posts_custom_column', array($this, 'add_rubric_column_value'), 10, 2 );
+		add_action('manage_pages_custom_column', array($this, 'add_rubric_page_column_value'), 10, 2);
+		add_action('quick_edit_custom_box', array($this, 'rubric_quick_edit'), 10, 2);
+
         //save posts/page
         add_action( 'save_post', array($this, 'save_rubric_evaluation'), 10, 3);
     }
@@ -192,6 +195,11 @@ class CTLT_Rubric_Evaluation_Lists
 		if ($column_name != RUBRIC_EVALUATION_COLUMN_KEY) {
 			return;
 		}
+
+		$user_role = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role(get_current_user_id());
+		if ($user_role == $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student']) {
+			return;
+		}
 		
 		wp_enqueue_script('CTLT_Rubric_Evaluation_Script');
 
@@ -293,11 +301,16 @@ class CTLT_Rubric_Evaluation_Lists
 			}
 			
 		} else {	//since it is NOT set, we need to remove it (check for date for due date????)
-			$terms = wp_get_object_terms($post_id, RUBRIC_EVALUATION_TAXONOMY);
+			//need to figure out whether from quicksave or normal edit/create page/post
+			$screen = get_current_screen();
+			if (!empty($screen) && $screen->base == 'post') {
 
-			if (!empty($terms)) {
-				$term = reset($terms);
-				wp_remove_object_terms($post_id, $term->slug, RUBRIC_EVALUATION_TAXONOMY);
+				$terms = wp_get_object_terms($post_id, RUBRIC_EVALUATION_TAXONOMY);
+	
+				if (!empty($terms)) {
+					$term = reset($terms);
+					wp_remove_object_terms($post_id, $term->slug, RUBRIC_EVALUATION_TAXONOMY);
+				}
 			}
 		}
     }
