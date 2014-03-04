@@ -29,7 +29,7 @@
  * - need to customize dashboard for various roles - done, but need to make it show useful data
  * 
  * BUGS:
- * - using quick edit on page/post, removes the rubric eval info
+ *
  * 
  * DONE:
  * - rough out dashboard widget
@@ -39,7 +39,8 @@
  * - need to setup DB - done
  * - page listing shows rubric eval column even if no page taxonomies! - FIXED
  * - add datepicker for due date / extended date - Done (Due date only)
- * 
+ * - using quick edit on page/post, removes the rubric eval info - FIXED
+ *  
  */
 class CTLT_Rubric_Evaluation_Admin
 {
@@ -77,29 +78,17 @@ class CTLT_Rubric_Evaluation_Admin
         add_action( 'admin_menu', array( $this, 'rubric_evaluation_menu' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
         add_action( 'init', array( $this, 'create_taxonomy' ) );
-
-        //filter posts....
-        //@TODO: need to make it more flexible to not just posts, but pages, etc
-        add_action('restrict_manage_posts', array($this, 'add_rubric_dropdown'));
-        add_filter('posts_where', array( $this, 'modify_posts_bulk_action'));
-        add_filter('manage_posts_columns', array($this, 'add_rubric_column_head'));
-        add_filter('manage_pages_columns', array($this, 'add_rubric_page_column_head'));
-        add_action( 'manage_posts_custom_column', array($this, 'add_rubric_column_value'), 10, 2 );
-        add_action( 'manage_page_posts_custom_column', array($this, 'add_rubric_page_column_value'), 10, 2 );
-        
-        //save posts/page
-        add_action( 'save_post', array($this, 'save_rubric_evaluation'), 10, 3);
        
         //@TODO: flesh out
         //setup rubric_post_types... need to modularize and make extandable
         $this->rubric_post_types = array('post', 'page');
         
         //register scripts (depends on google CDN!)
-        wp_register_script('CTLT_Rubric_Evaluation_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_evaluation.js', array('jquery', 'jquery-ui-datepicker'));
+        wp_register_script('CTLT_Rubric_Evaluation_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_evaluation.js', array('jquery', 'jquery-ui-datepicker'), false, true);
         wp_register_style('CTLT_Rubric_Evaluation_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_evaluation.css');
         wp_register_style('jquery-ui-1.10.1', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/smoothness/jquery-ui.css');
         wp_enqueue_style('CTLT_Rubric_Evaluation_Css');
-        wp_enqueue_style('jquery-ui-1.10.1');
+        wp_enqueue_style('jquery-ui-1.10.1');     
     }
 
     /**
@@ -157,16 +146,6 @@ class CTLT_Rubric_Evaluation_Admin
 		$this->setup_rubric_section();
 		$this->setup_roles_section();
 		$this->setup_grading_section();
-
-		//add metabox IF there are things to mark!
-		$postterms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for('post');
-		if (!empty($postterms)) {
-			add_meta_box('rubric_evaluation_post', __('Rubric Evaluation', 'ctlt_rubric_evaluation'), array($this, 'setup_metabox'), 'post', 'side', 'high');
-		}
-		$pageterms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for('page');
-		if (!empty($pageterms)) {
-			add_meta_box('rubric_evaluation_page', __('Rubric Evaluation', 'ctlt_rubric_evaluation'), array($this, 'setup_metabox'), 'page', 'side', 'high');
-		}
     }
 
 	public function setup_rubric_section() {
@@ -324,26 +303,6 @@ class CTLT_Rubric_Evaluation_Admin
 		}
     }
 
-    /**
-     * function to modify list posts query
-     *
-     * @props http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
-     * @param unknown $where
-     * @return string
-     */
-    public function modify_posts_bulk_action( $where ) {
-    	$rubric_eval_id = intval($_GET['rubric_eval']);
-    	//@TODO: need to make it so teachers and tas can see this???
-    	if ( is_admin()) {
-    		if ( isset( $_GET['rubric_eval'] ) && !empty( $_GET['rubric_eval'] ) && intval( $_GET['rubric_eval'] ) != 0 ) {
-    			global $wpdb;
-    			$term_id = intval( $_GET['rubric_eval'] );
-    			$where .= " AND ID IN (SELECT object_id FROM {$wpdb->term_relationships} WHERE term_taxonomy_id=$term_id )";
-    		}
-    	}
-    	return $where;
-    }
-    
     //======================================================================
     //
     // Output functions
@@ -428,7 +387,7 @@ class CTLT_Rubric_Evaluation_Admin
 					<?php  
 						$key_value = range(0,CTLT_Rubric_Evaluation_Admin::MAX_GRADES_DROPPED);
 						//TODO: need to set the default value correctly!
-						echo $this->_create_html_options(array_combine($key_value, $key_value), '0');
+						echo CTLT_Rubric_Evaluation_Util::ctlt_rubric_create_html_options(array_combine($key_value, $key_value), '0');
 					?>
 					</select>
 				</div>
@@ -439,7 +398,7 @@ class CTLT_Rubric_Evaluation_Admin
 					<?php  
 						$key_value = range(0,CTLT_Rubric_Evaluation_Admin::MAX_GRADES_DROPPED);
 						//TODO: need to set the default value correctly!
-						echo $this->_create_html_options(array_combine($key_value, $key_value), '0');
+						echo CTLT_Rubric_Evaluation_Util::ctlt_rubric_create_html_options(array_combine($key_value, $key_value), '0');
 					?>
 					</select>
 				</div>
@@ -449,7 +408,7 @@ class CTLT_Rubric_Evaluation_Admin
 					<select id="rubric_evaluation_grading_group_advanced_field_posttype" class="rubric_evaluation_select" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_advanced_field_posttype]">
 					<?php
 						//@TODO need to figure out how to pull this stuff out.....
-						echo $this->_create_html_options(array_combine($this->rubric_post_types, $this->rubric_post_types), 'post');
+						echo CTLT_Rubric_Evaluation_Util::ctlt_rubric_create_html_options(array_combine($this->rubric_post_types, $this->rubric_post_types), 'post');
 					?>
 					</select>
 				</div>
@@ -505,25 +464,6 @@ class CTLT_Rubric_Evaluation_Admin
         }
         echo '</table>';
     }
-    
-    public function add_rubric_dropdown() {
-		global $post;
-
-		//only add the dropdown if there is any terms involved!
-		$taxterms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for($post->post_type);
-		if (count($taxterms)) {
-			$array_key = array('0');
-			$array_value = array(__('View all rubric eval', 'ctlt_rubric_evaluation'));
-			foreach ($taxterms as $taxterm) {
-				$array_key[] = $taxterm->term_id;
-				$array_value[] = $taxterm->name;
-			}
-			
-			echo '<select name="rubric_eval" id="rubric_eval" class="postform">';
-			echo $this->_create_html_options(array_combine($array_key, $array_value), reset($array_key));
-			echo '</select>';
-		}
-	}
 	
 	public function output_grading() {
 		$selected = 'Text';
@@ -537,155 +477,8 @@ class CTLT_Rubric_Evaluation_Admin
 			$keyval[] = __($val, 'ctlt_rubric_evaluation');
 		}
 		
-		echo $this->_create_html_options(array_combine($keyval, $keyval), $selected);
+		echo CTLT_Rubric_Evaluation_Util::ctlt_rubric_create_html_options(array_combine($keyval, $keyval), $selected);
 		echo "</select>";
-	}
-	
-	/**
-	 * Adds column header for list all posts pages
-	 * 
-	 * @param unknown $defaults
-	 * @return array
-	 * @TODO: need to unhardcode!  @see add_rubric_page_column_head()
-	 */
-	public function add_rubric_column_head($defaults) {
-		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));
-		$taxterms = get_terms($tax, array('hide_empty' => false), 'names', 'and');
-		$new_defaults = array();
-		if (count($taxterms) && !(isset($_GET['post_type']) && $_GET['post_type'] == 'page')) {
-			$valid_keys = array_keys($defaults);
-			
-			if (in_array('tags', $valid_keys)) {
-				foreach ($defaults as $column_key => $column_name) {
-					$new_defaults[$column_key] = $column_name;
-					if ($column_key == 'tags') {
-						$new_defaults[RUBRIC_EVALUATION_COLUMN_KEY] = __('Rubric Evaluation', 'ctlt_rubric_evaluation');
-					}
-				}
-			} else { 
-				$defaults[RUBRIC_EVALUATION_COLUMN_KEY] = __('Rubric Evaluation', 'ctlt_rubric_evaluation');
-				$new_defaults = $defaults;
-			}
-		} else {
-			$new_defaults = $defaults;
-		}	
-		return $new_defaults;
-	}
-	
-	/**
-	 * Adds column header for list all posts pages
-	 *
-	 * @param unknown $defaults
-	 * @return array
-	 * @TODO: need to unhardcodd! @see add_rubric_column_head()
-	 */
-	public function add_rubric_page_column_head($defaults) {
-		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));
-		$taxterms = $this->_get_terms_for('page');
-		$new_defaults = array();
-		if (count($taxterms) && (isset($_GET['post_type']) && $_GET['post_type'] == 'page')) {
-			$valid_keys = array_keys($defaults);
-				
-			if (in_array('author', $valid_keys)) {
-				foreach ($defaults as $column_key => $column_name) {
-					$new_defaults[$column_key] = $column_name;
-					if ($column_key == 'author') {
-						$new_defaults[RUBRIC_EVALUATION_COLUMN_KEY] = __('Rubric Evaluation', 'ctlt_rubric_evaluation');
-					}
-				}
-			} else {
-				$defaults[RUBRIC_EVALUATION_COLUMN_KEY] = __('Rubric Evaluation', 'ctlt_rubric_evaluation');
-				$new_defaults = $defaults;
-			}
-		} else {
-			$new_defaults = $defaults;
-		}
-		return $new_defaults;
-	}
-	
-	/**
-	 * Adds value of each row for lists posts page
-	 * 
-	 * @param string $column_name
-	 * @param int $post_id
-	 */
-	public function add_rubric_column_value( $column_name, $post_id ) {
-		if ($column_name == RUBRIC_EVALUATION_COLUMN_KEY) {
-			$terms = wp_get_post_terms($post_id, RUBRIC_EVALUATION_TAXONOMY);
-			$term = array();
-			if (!empty($terms)) {
-				foreach ($terms as $term_unit) {
-					$term[] = $term_unit->name; 
-				}
-				echo implode(", ", $term);
-			}
-		}
-	}
-
-	/**
-	 * Adds value of each row for lists posts page
-	 *
-	 * @param string $column_name
-	 * @param int $post_id
-	 */
-	public function add_rubric_page_column_value( $column_name, $post_id ) {
-		if ($column_name == RUBRIC_EVALUATION_COLUMN_KEY) {
-			$terms = wp_get_object_terms($post_id, RUBRIC_EVALUATION_TAXONOMY);			
-			$term = array();
-			if (!empty($terms)) {
-				foreach ($terms as $term_unit) {
-					$term[] = $term_unit->name;
-				}
-				echo implode(", ", $term);
-			}
-		}
-	}
-	
-	public function setup_metabox() {
-		global $post;
-		/**
-		 * 1 get all terms for post type
-		 * 2 find out which ones are for posts
-		 * 3 add radio button
-		 * 4 make it work with javascript to make it toggleable
-		 * 5 need to check if past duedate for that term, if so, then dont' show it
-		 */
-		$terms = $this->_get_terms_for($post->post_type);
-		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));	
-		$post_terms_raw = get_the_terms($post, $tax);
-		$post_terms = array();
-		if (!empty($post_terms_raw)) {	
-			$post_terms = reset(get_the_terms($post, $tax));
-		}
-	
-		foreach ($terms as $term) {
-			//determined whether we should have what checked....
-			$checked = '';
-			if (!empty($post_terms) && $term->term_id == $post_terms->term_id) {
-				$checked = 'checked="checked"';
-			}
-			
-			//takes into consideration duedate if set
-			$term_description = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_term_meta($term);
-			if (isset($term_description['duedate']) && !empty($term_description['duedate'])) {
-				if (strtotime($term_description['duedate']) > time()) {
-					echo '<label class="rubric_evaluation_radio_label">';
-					echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
-					echo $term->name;
-				} else {
-					echo '<label class="rubric_evaluation_radio_label past_due">';					
-					echo '<div class="dashicons dashicons-dismiss"></div>';
-					echo $term->name . __('(Past Due Date)', 'ctlt_rubric_evaluation');
-				}
-			} else {
-				echo '<label class="rubric_evaluation_radio_label">';
-				echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
-				echo $term->name;
-			}
-
-
-			echo '</label><br>';
-		}
 	}
 
     //======================================================================
@@ -797,14 +590,22 @@ class CTLT_Rubric_Evaluation_Admin
     	
     	//hardcode teacher to admin for now.....
     	$new_input['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] = 'administrator';
-    	
-//     	error_log('sanitize role input: '.print_r($input, true));
-//     	error_log('sanitize role new_input: '.print_r($new_input, true));
-//     	exit();
+
     	return array('rubric_evaluation_roles_settings' => $new_input);
     }
 
-    public function save_rubric_evaluation( $post_id, $post, $update ) {		
+    public function save_rubric_evaluation( $post_id, $post, $update ) {
+
+		// don't save for autosave
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return $post_id;
+		}
+		
+		// dont save for revisions
+		if ( isset( $post->post_type ) && $post->post_type == 'revision' ) {
+			return $post_id;
+		}
+
 		$taxterms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for($post->post_type);
     	if (isset($_POST['rubric_eval_info']) && !empty($_POST['rubric_eval_info']) ) {
 			$term_slug = '';
@@ -840,30 +641,6 @@ class CTLT_Rubric_Evaluation_Admin
 	
 	private function _sanitize_class_name($to_sanitize) {
 		return preg_replace('/[^-_a-zA-Z0-9]+/','_', $to_sanitize);
-	}
-	
-	private function _create_html_options($arr, $default = '') {
-		$return_value = '';
-		foreach ($arr as $key => $val) {
-			if ($default == $key) {
-				$return_value .= "<option value='$key' selected='selected'>$val</option>\n";
-			} else {
-				$return_value .= "<option value='$key'>$val</option>\n";
-			}
-		}
-		return $return_value;
-	}
-	
-	private function _get_terms_for($post_type = 'post') {
-		$terms = get_terms(array(RUBRIC_EVALUATION_TAXONOMY), array('hide_empty' => false));
-		$return_value = array();
-		foreach ($terms as $term) {
-			$deserialized_info = unserialize(base64_decode($term->description));
-			if ($deserialized_info['posttype'] == $post_type) {
-				$return_value[] = $term;
-			}
-		}
-		return $return_value;
 	}
 }
 

@@ -91,8 +91,6 @@ class CTLT_Rubric_Evaluation_Util {
 					break;
 				default:
 					$return_value = 'read';
-					
-
 			}
 		}
 
@@ -201,5 +199,21 @@ class CTLT_Rubric_Evaluation_Util {
 			}
 		}
 		return $all_posts;
+	}
+	
+	public static function ctlt_rubric_create_html_options($arr, $default = '') {
+		if (!is_array($arr)) {
+			$arr = array($arr);
+		}
+		
+		$return_value = '';
+		foreach ($arr as $key => $val) {
+			if ($default == $key) {
+				$return_value .= "<option value='$key' selected='selected'>$val</option>\n";
+			} else {
+				$return_value .= "<option value='$key'>$val</option>\n";
+			}
+		}
+		return $return_value;
 	}
 }

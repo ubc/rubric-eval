@@ -26,7 +26,7 @@ require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_admin.
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_front.php');	//mark interactions
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_spreadsheet.php');	//grades
 require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_dashboard_widget.php');	//dashboard widget
-
+require_once(RUBRIC_EVALUATION_PLUGIN_PATH.'class/class.rubric_evaluation_lists.php');	//other admin non setting pages
 
 register_activation_hook(__FILE__, array('CTLT_Rubric_Evaluation_Util', 'ctlt_rubric_activate'));
 //TODO: need to regsiter deactivation and deletion hook to clean up stuff, like options, taxonomies
