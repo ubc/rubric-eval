@@ -149,7 +149,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     	if (!empty($this->rubric)) {
     		$column_name = array_keys($this->rubric['rubric_evaluation_rubric_name']);
     	} 
-
     	$terms = array();
     	foreach ($column_name as $cols) {
     		echo '<th>'.$cols.'</th>'; 
@@ -168,7 +167,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     			$user_link = '<a href="/wp-admin/user-edit.php?user_id='.$student_info->ID.'">'.$student_info->display_name.'</a>';
     		}
     		echo '<tr><td>'.$user_link.'</td>';
-    		foreach ($column_name as $col => $mark) {
+    		foreach ($column_name as $col => $mark) {    			
     			$id_name = 'rubric_evaluation_spreadsheet_value_'.($row + 1).'_'.($col + 1);
     			$value = 'a';
     			$term = $terms[$mark];
@@ -214,9 +213,12 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     					$post_title = $post_info->post_title;
     						
     					//now add grade if applicable
-    					$mark = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post_info), $post_info->ID, $term->term_id);
-    					if (!is_null($mark)) {
-    						$post_title .= ' ('.esc_attr($mark->mark).')';
+    					$grade_mark = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post_info), $post_info->ID, $term->term_id);    					
+    					if (!is_null($grade_mark)) {
+    						$post_title .= ' ('.esc_attr($grade_mark->mark).')';
+	    					$current_sub_mark = ($grade_mark->mark / CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_MAX_DROPDOWN_MARK) * ($this->rubric['rubric_evaluation_rubric_name'][$mark]['Total'] / 100);
+	    					$this->students[$row]->total_mark = $this->students[$row]->total_mark + $current_sub_mark;
+
     					}
     				}
     			}
@@ -224,13 +226,13 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     			if ($post_id == 0) {
     				echo $post_title;
     			} else {
-    				echo '<a href="'.$post_url.'">'.$post_title.'</a>';
+    				echo '<a target="_blank" href="'.$post_url.'">'.$post_title.'</a>';
     			}
     			echo '</td>';
     		}
     		//now to add total row
-    		$grade = 'n/a';
-    		echo '<td>'.$grade.'</td>';
+    		$grade = $this->students[$row]->total_mark;
+    		echo '<td>'.($grade * 100).'%</td>';
     		
     		echo '</tr>';
     			

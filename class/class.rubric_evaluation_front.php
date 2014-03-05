@@ -7,6 +7,7 @@
 class CTLT_Rubric_Evaluation_Front
 {
 	const RUBRIC_EVAL_INFO = 'rubric_eval_mark';
+	const RUBRIC_EVAL_MAX_DROPDOWN_MARK = 10;
 	
 	/**
 	 * Start up
@@ -144,7 +145,7 @@ class CTLT_Rubric_Evaluation_Front
 
 		$display = '';
 		$display .='<select class="rubric_evaluation_select" id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">';
-		foreach (array_combine(range(0, 10), range(0, 10)) as $key => $val) {
+		foreach (array_combine(range(0, CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_MAX_DROPDOWN_MARK), range(0, CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_MAX_DROPDOWN_MARK)) as $key => $val) {
 			if ($default == $key) {
 				$display .= "<option value='$key' selected='selected'>$val</option>\n";
 			} else {

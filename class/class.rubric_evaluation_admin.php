@@ -7,7 +7,6 @@
  * 
  * TODO:
  * - link to spreadsheet via anchor for type column names?
- * - need a way to edit taxonomy on edit/create post page into radio button
  * - think about forcing usage of evaluate plugin
  * - deal with mu stuff.....
  * - deal with language stuff (make last priority) - LAST
@@ -18,13 +17,13 @@
  * - detach taxonomy with everything else and add custom metabox to page/post/etc manually
  * - for class.front, need to make singular check for post types pulled form admin class???? 
  * - make list of terms ordered by duedate????? 
+ * - need to calculate grades
  *
  * PARTIALLY DONE:
  * - duedate is done on the front end for save-post.  can't create or edit a post and select term past duedate.
  * - - need to make saving post smarter:
  * - - - ensure that if you edit post past duedate, that it saves rubric eval term properly (don't change)
  * - do uninstall or disable plugin functions - partially done, need to deal with page
- * - need to add filter for posts/page list pages - done, but just for posts
  * - need to display grades - does display, but is not pretty right now 
  * - need to customize dashboard for various roles - done, but need to make it show useful data
  * 
@@ -40,6 +39,8 @@
  * - page listing shows rubric eval column even if no page taxonomies! - FIXED
  * - add datepicker for due date / extended date - Done (Due date only)
  * - using quick edit on page/post, removes the rubric eval info - FIXED
+ * - need a way to edit taxonomy on edit/create post page into radio button - DONE
+ * - need to add filter for posts/page list pages - done, but just for posts - DONE
  *  
  */
 class CTLT_Rubric_Evaluation_Admin
@@ -448,7 +449,7 @@ class CTLT_Rubric_Evaluation_Admin
 		$row = 1; //row count
 		foreach ($vertical_titles as $v_title) {
 			echo '<tr>';
-			echo '<td><a href="#delete" class="ctlt_rubric_delete_row" data-row="'.$row.'">x</a></td>';
+			echo '<td class="action"><a href="#delete" class="ctlt_rubric_delete_row" data-row="'.$row.'">x</a></td>';
 			echo '<td class="heading '.$this->_sanitize_class_name($v_title).'">'.
 					'<label id="rubric_evaluation_rubric_label_'.$row.'" value="'.$v_title.'" />'.$v_title.'</label>'.
 					'<input type="hidden" id="rubric_evaluation_rubric_values_'.$row.'" name="rubric_evaluation_rubric_name[rubric_evaluation_rubric_values_'.$row.']" value="'.$v_title.'"/>'.

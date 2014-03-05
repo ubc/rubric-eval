@@ -1,23 +1,57 @@
+/* rubric eval settings add new type section */
 .add_grading_group div {
 	float: left;
 	padding-right: 10px;
 }
-
 #add_grading_group_advanced_btn {
 	float: left;
 	clear: both;
 	margin-top: 10px;
 }
-
 .add_grading_group_advanced {
 	clear: both;
 	padding-top: 10px;
 }
-
 .rubric_evaluation_select {
 	width: 100px;
 }
 
+/* hide student weight and table styles*/
+.Student_Weight {
+	display: none;
+}
+.Instructor_Weight {
+	display: none;
+}
+table.rubric {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+table.rubric td {
+	border: solid 1px black;
+}
+table.rubric th {
+	border: solid 1px black;
+	text-align: center;
+}
+table.rubric td.action {
+	text-align: center;
+}
+
+/* spreadsheet styles */
+table.spreadsheet {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+table.spreadsheet td {
+	border: solid 1px black;
+}
+table.spreadsheet th {
+	border: solid 1px black;
+	text-align: center;
+}
+
+/* in edit/create post/page selecting rubric eval */
 #rubric_evaluation_post .dashicons, #rubric_evaluation_page .dashicons {
 	padding-top: 3px;
 	padding-right: 4px;
@@ -27,6 +61,7 @@
 	cursor: default;
 }
 
+/* dashboard widget section */
 ul.rubric_evaluation_list .rubric_evaluation_term {
 	min-width: 100px;
 	white-space: nowrap;
@@ -70,5 +105,4 @@ ul.rubric_evaluation_list {
 }
 .rubric_eval_date_invalid {
 	color: red;
-}
 }
