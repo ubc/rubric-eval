@@ -20,7 +20,6 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
-        add_filter( 'the_content', array($this, 'front_grade_box'));
  
         //get student role
   		$this->_setup_author_and_options();

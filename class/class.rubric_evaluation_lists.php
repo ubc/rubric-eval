@@ -24,6 +24,9 @@ class CTLT_Rubric_Evaluation_Lists
 
         //save posts/page
         add_action( 'save_post', array($this, 'save_rubric_evaluation'), 10, 3);
+        
+		wp_register_script('CTLT_Rubric_Evaluation_Lists_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_lists.js', array('jquery'), false, true);    
+		wp_register_script('CTLT_Rubric_Evaluation_Edit_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_edit.js', array('jquery'), false, true);
     }
     
     /**
@@ -201,7 +204,7 @@ class CTLT_Rubric_Evaluation_Lists
 			return;
 		}
 		
-		wp_enqueue_script('CTLT_Rubric_Evaluation_Script');
+		wp_enqueue_script('CTLT_Rubric_Evaluation_Lists_Script');
 
 		if ($column_name == 'rubric_eval_column') {
 			$terms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for($post_type);
@@ -243,7 +246,9 @@ class CTLT_Rubric_Evaluation_Lists
 		if (!empty($post_terms_raw)) {	
 			$post_terms = reset(get_the_terms($post, $tax));
 		}
-	
+
+		wp_enqueue_script('CTLT_Rubric_Evaluation_Edit_Script');
+		
 		foreach ($terms as $term) {
 			//determined whether we should have what checked....
 			$checked = '';

@@ -17,7 +17,7 @@ class CTLT_Rubric_Evaluation_Front
 		add_action('wp_ajax_rubric_eval_mark', array($this, 'rubric_eval_mark'));
 
 		//add javascript
-		wp_enqueue_script('CTLT_Rubric_Evaluation_Script');
+		wp_register_script('CTLT_Rubric_Evaluation_Front_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_front.js', array('jquery'), false, true);
 	}
 	
 	public function rubric_eval_mark() {		
@@ -53,11 +53,13 @@ class CTLT_Rubric_Evaluation_Front
 		$current_user = wp_get_current_user();
 		$isLoggedin = is_user_logged_in();
 		$terms = wp_get_post_terms($post->ID, array('ctlt_rubric_evaluation'));
-
+		
 		$display = '';
 		
 		//check if we even should display something
 		if (!is_wp_error($terms) && !empty($terms) && $isLoggedin && is_singular() && count($terms) == 1) {
+			wp_enqueue_script('CTLT_Rubric_Evaluation_Front_Script');
+			
 			$term = reset($terms);
 			$value = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post), $post->ID, $term->term_id); //need to pull from DB's table
 			$value = (is_null($value) ? 0 : esc_attr($value->mark));

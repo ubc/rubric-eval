@@ -18,8 +18,15 @@
  * - for class.front, need to make singular check for post types pulled form admin class???? 
  * - make list of terms ordered by duedate????? 
  * - need to calculate grades
+ * 
+ * - brake it up into smaller files.
+ * - ids and classes shouldn't have underscores but dashes
+ * - I think you can shorten the id to not include grade book
+ * - more comments please... helps with readability of code... 
+ * 
  *
  * PARTIALLY DONE:
+ * - Only include css and js on pages that you need it. - only js done. need to do css
  * - duedate is done on the front end for save-post.  can't create or edit a post and select term past duedate.
  * - - need to make saving post smarter:
  * - - - ensure that if you edit post past duedate, that it saves rubric eval term properly (don't change)
@@ -85,11 +92,9 @@ class CTLT_Rubric_Evaluation_Admin
         $this->rubric_post_types = array('post', 'page');
         
         //register scripts (depends on google CDN!)
-        wp_register_script('CTLT_Rubric_Evaluation_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_evaluation.js', array('jquery', 'jquery-ui-datepicker'), false, true);
+        wp_register_script('CTLT_Rubric_Evaluation_Settings_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_settings.js', array('jquery', 'jquery-ui-datepicker'), false, true);
         wp_register_style('CTLT_Rubric_Evaluation_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_evaluation.css');
         wp_register_style('jquery-ui-1.10.1', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/smoothness/jquery-ui.css');
-        wp_enqueue_style('CTLT_Rubric_Evaluation_Css');
-        wp_enqueue_style('jquery-ui-1.10.1');     
     }
 
     /**
@@ -313,8 +318,14 @@ class CTLT_Rubric_Evaluation_Admin
      * Options page callback
      */
 	public function create_rubric_evaluation_settings_page() {
+		$current_screen = get_current_screen();
+		if ($current_screen->parent_base != 'rubric_evaluation_settings') {
+			return;
+		}
 		if ($this->active_tab === 'display_rubric') {
-    		wp_enqueue_script('CTLT_Rubric_Evaluation_Script');
+    		wp_enqueue_style('CTLT_Rubric_Evaluation_Css');
+    		wp_enqueue_style('jquery-ui-1.10.1');
+    		wp_enqueue_script('CTLT_Rubric_Evaluation_Settings_Script');
 		}
 
 		//add active class to tabs based on get parameter tab
