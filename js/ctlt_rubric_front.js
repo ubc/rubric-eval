@@ -2,7 +2,7 @@
 	 $(document).ready(function() {
 		//--- front end marking section ---//
 		//submit form
-		$('#rubric_eval_form').submit(function(e) {
+		$('#rubric-eval-form').submit(function(e) {
 			var inputs = $(this).serialize();
 			var data = {
 				action: 'rubric_eval_mark',

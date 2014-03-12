@@ -146,7 +146,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     	//columns
     	$column_name = array();
     	if (!empty($this->rubric)) {
-    		$column_name = array_keys($this->rubric['rubric_evaluation_rubric_name']);
+    		$column_name = array_keys($this->rubric['rubric-evaluation-rubric-name']);
     	} 
     	$terms = array();
     	foreach ($column_name as $cols) {
@@ -215,7 +215,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
     					$grade_mark = CTLT_Rubric_Evaluation_Front::get_rubric_evaluation_mark(get_post_type($post_info), $post_info->ID, $term->term_id);    					
     					if (!is_null($grade_mark)) {
     						$post_title .= ' ('.esc_attr($grade_mark->mark).')';
-	    					$current_sub_mark = ($grade_mark->mark / CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_MAX_DROPDOWN_MARK) * ($this->rubric['rubric_evaluation_rubric_name'][$mark]['Total'] / 100);
+	    					$current_sub_mark = ($grade_mark->mark / CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_MAX_DROPDOWN_MARK) * ($this->rubric['rubric-evaluation-rubric-name'][$mark]['Total'] / 100);
 	    					$this->students[$row]->total_mark = $this->students[$row]->total_mark + $current_sub_mark;
 
     					}
@@ -288,7 +288,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
 		}
 		
 		//get rubric
-		$rubric = get_option('rubric_evaluation_rubric_name');
+		$rubric = get_option('rubric-evaluation-rubric-name');
 		if ($rubric !== false) {
 			$this->rubric = $rubric;
 		}

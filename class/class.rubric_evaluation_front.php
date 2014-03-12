@@ -65,16 +65,16 @@ class CTLT_Rubric_Evaluation_Front
 			$value = (is_null($value) ? 0 : esc_attr($value->mark));
 		
 			$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
-			$roles = get_option('rubric_evaluation_roles_settings');
-			$teacher = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
-			$student = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
-			$ta = $roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
+			$roles = get_option('rubric-evaluation-roles-settings');
+			$teacher = $roles['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-teacher'];
+			$student = $roles['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-student'];
+			$ta = $roles['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-ta'];
 			
 			if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
 				//we need to determine what format the input takes
-				$type_option = get_option('rubric_evaluation_roles_settings');
-				$type = $type_option['rubric_evaluation_roles_settings']['rubric_evaluation_grading_type']['rubric_evaluation_grading_type'];
-				$display .= '<form method="post" id="rubric_eval_form" action=""><label for="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">'.__('Mark', 'ctlt_rubric_evaluation').'</label>';
+				$type_option = get_option('rubric-evaluation-roles-settings');
+				$type = $type_option['rubric-evaluation-roles-settings']['rubric-evaluation-grading-type']['rubric-evaluation-grading-type'];
+				$display .= '<form method="post" id="rubric-eval-form" action=""><label for="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">'.__('Mark', 'ctlt_rubric_evaluation').'</label>';
 				
 				if (strcasecmp('text', $type) == 0) {
 					$display .= $this->_output_text();
@@ -84,10 +84,10 @@ class CTLT_Rubric_Evaluation_Front
 					$display .= __('Please set the Grading Type again', 'ctlt_rubric_evaluation');
 				}
 				
-				$display .= '<input class="btn" id="rubric_eval_mark_submit" type="submit" value="'.__('Submit', 'ctlt_rubric_evaluation').'">';
+				$display .= '<input class="btn" id="rubric-eval-mark-submit" type="submit" value="'.__('Submit', 'ctlt_rubric_evaluation').'">';
 				$display .= '</form>';
 			} elseif (isset($student) && ( $user == $student ) && $current_user->ID == $post->post_author) {				
-				$display .= '<div class="rubric_eval_show_mark">';
+				$display .= '<div class="rubric-eval-show-mark">';
 				$display .= __( 'Mark: ', 'ctlt_rubric_evaluation').$value;
 				$display .= '</div>';
 			}

@@ -160,7 +160,7 @@ class CTLT_Rubric_Evaluation_Lists
 					$term[] = $term_unit->name; 
 				}
 				$term_val = reset($terms);
-				$hidden = '<input type="hidden" class="rubric_eval_mark_value" value="'.$term_val->term_id.'">';
+				$hidden = '<input type="hidden" class="rubric-eval-mark-value" value="'.$term_val->term_id.'">';
 				echo $hidden.implode(", ", $term);
 			}
 		}
@@ -181,7 +181,7 @@ class CTLT_Rubric_Evaluation_Lists
 					$term[] = $term_unit->name;
 				}
 				$term_val = reset($terms);
-				$hidden = '<input type="hidden" class="rubric_eval_mark_value" value="'.$term_val->term_id.'">';
+				$hidden = '<input type="hidden" class="rubric-eval-mark-value" value="'.$term_val->term_id.'">';
 				echo $hidden.implode(", ", $term);
 			}
 		}
@@ -200,7 +200,7 @@ class CTLT_Rubric_Evaluation_Lists
 		}
 
 		$user_role = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role(get_current_user_id());
-		if ($user_role == $this->roles['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student']) {
+		if ($user_role == $this->roles['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-student']) {
 			return;
 		}
 		
@@ -213,7 +213,7 @@ class CTLT_Rubric_Evaluation_Lists
 		      <div class="inline-edit-col column-<?php echo $column_name ?>">
 		        <label class="inline-edit-group">
 		        	<span class="title"><?php _e('Rubric Evaluation Mark', 'ctlt_rubric_evalution');?></span>
-		        	<select class="rubric_evaluation_select" name="rubric_eval_info">
+		        	<select class="rubric-evaluation-select" name="rubric-eval-info">
 		        		<option value="0">&nbsp;</option>
 		        	<?php
 	        		foreach ($terms as $term) {
@@ -260,17 +260,17 @@ class CTLT_Rubric_Evaluation_Lists
 			$term_description = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_term_meta($term);
 			if (isset($term_description['duedate']) && !empty($term_description['duedate'])) {
 				if (strtotime($term_description['duedate']) > time()) {
-					echo '<label class="rubric_evaluation_radio_label">';
-					echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
+					echo '<label class="rubric-evaluation-radio-label">';
+					echo '<input '.$checked.' class="rubric-evaluation-radio" type="radio" name="rubric-eval-info" value="'.$term->term_id.'">';
 					echo $term->name;
 				} else {
-					echo '<label class="rubric_evaluation_radio_label past_due">';					
+					echo '<label class="rubric-evaluation-radio-label past_due">';					
 					echo '<div class="dashicons dashicons-dismiss"></div>';
 					echo $term->name . __('(Past Due Date)', 'ctlt_rubric_evaluation');
 				}
 			} else {
-				echo '<label class="rubric_evaluation_radio_label">';
-				echo '<input '.$checked.' class="rubric_evaluation_radio" type="radio" name="rubric_eval_info" value="'.$term->term_id.'">';
+				echo '<label class="rubric-evaluation-radio-label">';
+				echo '<input '.$checked.' class="rubric-evaluation-radio" type="radio" name="rubric-eval-info" value="'.$term->term_id.'">';
 				echo $term->name;
 			}
 
@@ -292,10 +292,10 @@ class CTLT_Rubric_Evaluation_Lists
 		}
 
 		$taxterms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for($post->post_type);
-    	if (isset($_POST['rubric_eval_info']) && !empty($_POST['rubric_eval_info']) ) {
+    	if (isset($_POST['rubric-eval-info']) && !empty($_POST['rubric-eval-info']) ) {
 			$term_slug = '';
 			foreach ($taxterms as $term) {
-				if ($term->term_id == $_POST['rubric_eval_info']) {
+				if ($term->term_id == $_POST['rubric-eval-info']) {
 					$term_slug = $term->slug;
 					break;
 				}

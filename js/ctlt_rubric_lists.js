@@ -24,10 +24,10 @@
 					var $post_row = $( '#post-' + $post_id );
 					
 					//get the data
-					var $rubric_mark = $( '.rubric_eval_mark_value', $post_row).val();
+					var $rubric_mark = $( '.rubric-eval-mark-value', $post_row).val();
 		
 					//populate quick edit
-					$( '.rubric_evaluation_select:input', $edit_row ).val($rubric_mark);
+					$( '.rubric-evaluation-select:input', $edit_row ).val($rubric_mark);
 			
 				}
 			}

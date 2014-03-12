@@ -2,29 +2,32 @@
 	 $(document).ready(function() {
 		//--- rubric settings pages ---//
 		//dealing with + Grading Group buton
-		$('#add_grading_group_btn').click(function() {
+		$('#add-grading-group-btn').click(function() {
 			if ($(this).html().indexOf('+') >= 0) {
 				$(this).text($(this).html().replace('+','-'));
-				$('.add_grading_group').slideDown();
+				$('.add-grading-group').slideDown();
 			} else {
 				$(this).text($(this).html().replace('-','+'));
-				$('.add_grading_group').slideUp();
+				$('.add-grading-group').slideUp();
 			}
 		});
 		
 		//dealing with + Advanced Options button
-		$('#add_grading_group_advanced_btn').click(function() {
+		$('#add-grading-group-advanced-btn').click(function() {
 			if ($(this).html().indexOf('+') >= 0) {
 				$(this).text($(this).html().replace('+','-'));
-				$('.add_grading_group_advanced').slideDown();
+				$('.add-grading-group-advanced').slideDown();
 			} else {
 				$(this).text($(this).html().replace('-','+'));
-				$('.add_grading_group_advanced').slideUp();
+				$('.add-grading-group-advanced').slideUp();
 			}
 		});
 		
+		//now to deal with datepicker!
+		$('#rubric-evaluation-grading-group-field-duedate').datepicker();
+		
 		//dealing with removing rows
-		$('.ctlt_rubric_delete_row').click(function() {
+		$('.ctlt-rubric-delete-row').click(function() {
 			var row = $(this).attr('data-row');
 			if (confirm('Are you sure you want to delete this?')) {
 				$(this).parent().parent().remove();

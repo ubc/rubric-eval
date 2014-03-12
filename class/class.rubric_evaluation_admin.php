@@ -20,13 +20,12 @@
  * - need to calculate grades
  * 
  * - brake it up into smaller files.
- * - ids and classes shouldn't have underscores but dashes
  * - I think you can shorten the id to not include grade book
  * - more comments please... helps with readability of code... 
  * 
  *
  * PARTIALLY DONE:
- * - Only include css and js on pages that you need it. - only js done. need to do css
+ * - Only include css and js on pages that you need it. - only js done. need to do css (http://make.wordpress.org/core/handbook/coding-standards/css/)
  * - duedate is done on the front end for save-post.  can't create or edit a post and select term past duedate.
  * - - need to make saving post smarter:
  * - - - ensure that if you edit post past duedate, that it saves rubric eval term properly (don't change)
@@ -48,6 +47,7 @@
  * - using quick edit on page/post, removes the rubric eval info - FIXED
  * - need a way to edit taxonomy on edit/create post page into radio button - DONE
  * - need to add filter for posts/page list pages - done, but just for posts - DONE
+ * - ids and classes shouldn't have underscores but dashes - DONE
  *  
  */
 class CTLT_Rubric_Evaluation_Admin
@@ -92,9 +92,9 @@ class CTLT_Rubric_Evaluation_Admin
         $this->rubric_post_types = array('post', 'page');
         
         //register scripts (depends on google CDN!)
+        wp_register_style('jquery-ui-1.10.1', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/smoothness/jquery-ui.css');
         wp_register_script('CTLT_Rubric_Evaluation_Settings_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_settings.js', array('jquery', 'jquery-ui-datepicker'), false, true);
         wp_register_style('CTLT_Rubric_Evaluation_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_evaluation.css');
-        wp_register_style('jquery-ui-1.10.1', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/smoothness/jquery-ui.css');
     }
 
     /**
@@ -102,9 +102,9 @@ class CTLT_Rubric_Evaluation_Admin
      */
     public function rubric_evaluation_menu() {
     	$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
-    	$teacher = $this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'];
-    	$student = $this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'];
-    	$ta = $this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'];
+    	$teacher = $this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-teacher'];
+    	$student = $this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-student'];
+    	$ta = $this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-ta'];
 
     	if ((isset($teacher) && ( $user == $teacher )) || (isset($ta) && ( $user == $ta ))) {
     		//add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
@@ -123,25 +123,24 @@ class CTLT_Rubric_Evaluation_Admin
     }
 
     public function setup_options() {
-    	$rubric_evaluation_rubric_name = get_option('rubric_evaluation_rubric_name');
+    	$rubric_evaluation_rubric_name = get_option('rubric-evaluation-rubric-name');
     	if ($rubric_evaluation_rubric_name !== false) {
     		$this->options[reset(array_keys($rubric_evaluation_rubric_name))] = $rubric_evaluation_rubric_name[reset(array_keys($rubric_evaluation_rubric_name))];
     	} else {
-    		$this->options['rubric_evaluation_rubric_name'] = array();
+    		$this->options['rubric-evaluation-rubric-name'] = array();
     	}
-    	
-    	$rubric_evaluation_roles_settings = get_option('rubric_evaluation_roles_settings');
+    	$rubric_evaluation_roles_settings = get_option('rubric-evaluation-roles-settings');
     	if ($rubric_evaluation_roles_settings !== false && !empty($rubric_evaluation_roles_settings)) {
 			$this->options[reset(array_keys($rubric_evaluation_roles_settings))] = $rubric_evaluation_roles_settings[reset(array_keys($rubric_evaluation_roles_settings))];
     	} else {
     		//set to default!  Should only be done when first installed
-    		$this->options['rubric_evaluation_roles_settings'] = array('rubric_evaluation_roles_settings' => array(
-	    			'rubric_evaluation_role_ta' => 'editor',
-	    			'rubric_evaluation_role_student' => 'author',
-	    			'rubric_evaluation_role_teacher' => 'administrator',
+    		$this->options['rubric-evaluation-roles-settings'] = array('rubric-evaluation-roles-settings' => array(
+	    			'rubric-evaluation-role-ta' => 'editor',
+	    			'rubric-evaluation-role-student' => 'author',
+	    			'rubric-evaluation-role-teacher' => 'administrator',
     			),
-    				'rubric_evaluation_grading_type' => array('rubric_evaluation_grading_type' => 'Text'));
-    		add_option('rubric_evaluation_roles_settings', array('rubric_evaluation_roles_settings' => $this->options['rubric_evaluation_roles_settings']));
+    				'rubric-evaluation-grading-type' => array('rubric-evaluation-grading-type' => 'Text'));
+    		add_option('rubric-evaluation-roles-settings', array('rubric-evaluation-roles-settings' => $this->options['rubric-evaluation-roles-settings']));
     	}
     }
 
@@ -193,23 +192,23 @@ class CTLT_Rubric_Evaluation_Admin
 
     	register_setting(
 	    	'rubric_evaluation_rubric', // Option group
-	    	'rubric_evaluation_rubric_name', // Option name
+	    	'rubric-evaluation-rubric-name', // Option name
 	    	array( $this, 'sanitize_rubric' ) // Sanitize
     	);
     }
     
     public function setup_roles_section() {
 		//get initial roles for various roles
-    	$ta = (isset($this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta']) ? 
-	    	$this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_ta'] :
+    	$ta = (isset($this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-ta']) ? 
+	    	$this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-ta'] :
 	    	'editor');
-    	$student = (isset($this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student']) ? 
-	    	$this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_student'] :
+    	$student = (isset($this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-student']) ? 
+	    	$this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-student'] :
 	    	'author');
-    	$teacher = (isset($this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher']) ? 
-	    	$this->options['rubric_evaluation_roles_settings']['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] :
+    	$teacher = (isset($this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-teacher']) ? 
+	    	$this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-teacher'] :
 	    	'administrator');
-    	
+
     	//settings API display fields
     	add_settings_section(
 	    	'rubric_evaluation_section_roles',
@@ -224,7 +223,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array( $this, 'output_roles'),
 	    	'rubric_evaluation_settings_role', // Page
 	    	'rubric_evaluation_section_roles', // Section
-	    	array('rubric_evaluation_role_teacher', $this->_get_role('rubric_evaluation_role_teacher', $teacher), 'disabled')
+	    	array('rubric-evaluation-role-teacher', $this->_get_role('rubric-evaluation-role-teacher', $teacher), 'disabled')
     	);
     	
     	add_settings_field(
@@ -233,7 +232,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array( $this, 'output_roles'),
 	    	'rubric_evaluation_settings_role', // Page
 	    	'rubric_evaluation_section_roles', // Section
-	    	array('rubric_evaluation_role_ta', $this->_get_role('rubric_evaluation_role_ta', $ta))
+	    	array('rubric-evaluation-role-ta', $this->_get_role('rubric-evaluation-role-ta', $ta))
     	);
     	
     	add_settings_field(
@@ -242,12 +241,12 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array( $this, 'output_roles'),
 	    	'rubric_evaluation_settings_role', // Page
 	    	'rubric_evaluation_section_roles', // Section
-	    	array('rubric_evaluation_role_student', $this->_get_role('rubric_evaluation_role_student', $student))
+	    	array('rubric-evaluation-role-student', $this->_get_role('rubric-evaluation-role-student', $student))
     	);
     	 
     	register_setting(
 	    	'rubric_evaluation_roles', // Option group
-	    	'rubric_evaluation_roles_settings', // Option name
+	    	'rubric-evaluation-roles-settings', // Option name
 	    	array( $this, 'sanitize_roles' ) // Sanitize
     	);
     }
@@ -337,9 +336,9 @@ class CTLT_Rubric_Evaluation_Admin
                 <h2><?php _e('Rubric Evaluation Settings');?></h2>
                 <?php 
                 	if ($this->active_tab === 'display_advanced') {
-						settings_errors('rubric_evaluation_roles'); 
+						settings_errors('rubric-evaluation-roles'); 
 					} else {
-						settings_errors('rubric_evaluation_rubric');
+						settings_errors('rubric-evaluation-rubric');
 					}
 				?>    
                 
@@ -366,36 +365,36 @@ class CTLT_Rubric_Evaluation_Admin
         
     public function output_grading_group() {
     	?>
-    	<a href="#add" class="button action-button" id="add_grading_group_btn">+ <?php _e('Grading Group', 'ctlt_rubric_evaluation');?></a>
-    	<div class="add_grading_group" style="display:none;">
-	    	<div class="grading_group_label">
-	    		<label class="rubric_evaluation_grading_group_field"><?php _e('Label (eg.Assignment)', 'ctlt_rubric_evaluation');?></label>
+    	<a href="#add" class="button action-button" id="add-grading-group-btn">+ <?php _e('Grading Group', 'ctlt_rubric_evaluation');?></a>
+    	<div class="add-grading-group" style="display:none;">
+	    	<div class="grading-group-label">
+	    		<label class="rubric-evaluation-grading-group-field"><?php _e('Label (eg.Assignment)', 'ctlt_rubric_evaluation');?></label>
 	    		<br>
-	    		<input id="rubric_evaluation_grading_group_field_label" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_field_label]" value="">
+	    		<input id="rubric-evaluation-grading-group-field-label" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-field-label]" value="">
 	    	</div>
-			<div class="grading_group_note">
-				<label class="rubric_evaluation_grading_group_field"><?php _e('Note', 'ctlt_rubric_evaluation');?></label>
+			<div class="grading-group-note">
+				<label class="rubric-evaluation-grading-group-field"><?php _e('Note', 'ctlt_rubric_evaluation');?></label>
 				<br>
-				<input id="rubric_evaluation_grading_group_field_note" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_field_note]" value="">
+				<input id="rubric-evaluation-grading-group-field-note" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-field-note]" value="">
 			</div>
-			<div class="grading_group_duedate">
-				<label class="rubric_evaluation_grading_group_field"><?php _e('Due Date', 'ctlt_rubric_evaluation');?></label>
+			<div class="grading-group-duedate">
+				<label class="rubric-evaluation-grading-group-field"><?php _e('Due Date', 'ctlt_rubric_evaluation');?></label>
 				<br>
-				<input id="rubric_evaluation_grading_group_field_duedate" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_field_duedate]" value="">
+				<input id="rubric-evaluation-grading-group-field-duedate" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-field-duedate]" value="">
 			</div>
 			<!-- Hide this one for now as I don't think it quite makes sense -->
-			<div class="grading_group_total" style="display:none;">
-				<label class="rubric_evaluation_grading_group_field"><?php _e('% of Total', 'ctlt_rubric_evaluation');?></label>
+			<div class="grading-group-total" style="display:none;">
+				<label class="rubric-evaluation-grading-group-field"><?php _e('% of Total', 'ctlt_rubric_evaluation');?></label>
 				<br>
-				<input id="rubric_evaluation_grading_group_field_total" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_field_total]" value="">
+				<input id="rubric-evaluation-grading-group-field-total" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-field-total]" value="">
 			</div>
 			<br>
-			<a href="#add_advanced" class="button action-button" id="add_grading_group_advanced_btn">+ <?php _e('Advanced Options', 'ctlt_rubric_evaluation');?></a>
-			<div class="add_grading_group_advanced" style="display:none;">
-				<div class="grading_group_advanced_droptop">
-					<label class="rubric_evaluation_grading_group_advanced_field"><?php _e('Drop Top #', 'ctlt_rubric_evaluation');?></label>
+			<a href="#add-advanced" class="button action-button" id="add-grading-group-advanced-btn">+ <?php _e('Advanced Options', 'ctlt_rubric_evaluation');?></a>
+			<div class="add-grading-group-advanced" style="display:none;">
+				<div class="grading-group-advanced-droptop">
+					<label class="rubric-evaluation-grading-group-advanced-field"><?php _e('Drop Top #', 'ctlt_rubric_evaluation');?></label>
 					<br>
-					<select id="rubric_evaluation_grading_group_advanced_field_droptop" class="rubric_evaluation_select" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_advanced_field_droptop]">
+					<select id="rubric-evaluation-grading-group-advanced-field-droptop" class="rubric-evaluation-select" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-advanced-field-droptop]">
 					<?php  
 						$key_value = range(0,CTLT_Rubric_Evaluation_Admin::MAX_GRADES_DROPPED);
 						//TODO: need to set the default value correctly!
@@ -403,10 +402,10 @@ class CTLT_Rubric_Evaluation_Admin
 					?>
 					</select>
 				</div>
-				<div class="grading_group_advanced_dropbottom">
-					<label class="rubric_evaluation_grading_group_advanced_field"><?php _e('Drop Bottom #', 'ctlt_rubric_evaluation');?></label>
+				<div class="grading-group-advanced-dropbottom">
+					<label class="rubric-evaluation-grading-group-advanced-field"><?php _e('Drop Bottom #', 'ctlt_rubric_evaluation');?></label>
 					<br>
-					<select id="rubric_evaluation_grading_group_advanced_field_dropbottom" class="rubric_evaluation_select" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_advanced_field_dropbottom]">
+					<select id="rubric-evaluation-grading-group-advanced-field-dropbottom" class="rubric-evaluation-select" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-advanced-field-dropbottom]">
 					<?php  
 						$key_value = range(0,CTLT_Rubric_Evaluation_Admin::MAX_GRADES_DROPPED);
 						//TODO: need to set the default value correctly!
@@ -414,10 +413,10 @@ class CTLT_Rubric_Evaluation_Admin
 					?>
 					</select>
 				</div>
-				<div class="grading_group_advanced_posttype" >
-					<label class="rubric_evaluation_grading_group_advanced_field"><?php _e('Post Type', 'ctlt_rubric_evaluation');?></label>
+				<div class="grading-group-advanced-posttype" >
+					<label class="rubric-evaluation-grading-group-advanced-field"><?php _e('Post Type', 'ctlt_rubric_evaluation');?></label>
 					<br>
-					<select id="rubric_evaluation_grading_group_advanced_field_posttype" class="rubric_evaluation_select" name="rubric_evaluation_rubric_name[rubric_evaluation_grading_group_advanced_field_posttype]">
+					<select id="rubric-evaluation-grading-group-advanced-field-posttype" class="rubric-evaluation-select" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-advanced-field-posttype]">
 					<?php
 						//@TODO need to figure out how to pull this stuff out.....
 						echo CTLT_Rubric_Evaluation_Util::ctlt_rubric_create_html_options(array_combine($this->rubric_post_types, $this->rubric_post_types), 'post');
@@ -437,8 +436,8 @@ class CTLT_Rubric_Evaluation_Admin
 
     public function output_roles($options) {
 		$select_extras = (isset($options[2])? $options[2] : '');
-		$value = isset($this->options['rubric_evaluation_roles_settings'][$options[0]])? $this->options['rubric_evaluation_roles_settings'][$options[0]] : $options[1];
-    	echo "<select $select_extras id='".$options[0]."' name='rubric_evaluation_roles_settings[".$options[0]."]'>";
+		$value = isset($this->options['rubric-evaluation-roles-settings'][$options[0]])? $this->options['rubric-evaluation-roles-settings'][$options[0]] : $options[1];
+    	echo "<select $select_extras id='".$options[0]."' name='rubric-evaluation-roles-settings[".$options[0]."]'>";
     	echo wp_dropdown_roles($value);
     	echo "</select>";
     }
@@ -447,9 +446,9 @@ class CTLT_Rubric_Evaluation_Admin
      * Get the settings option array and print one of its values
      */
     public function output_rubric() {
-		$vertical_titles = !empty($this->options['rubric_evaluation_rubric_name'])? array_keys($this->options['rubric_evaluation_rubric_name']) : array();
-
-    	echo "<table class='rubric'>\n<tr><th>".__('Actions', 'ctlt_rubric_evaluation')."</th><th>".__('Type', 'ctlt_rubric_evaluation')."</th>";
+		$vertical_titles = !empty($this->options['rubric-evaluation-rubric-name'])? array_keys($this->options['rubric-evaluation-rubric-name']) : array();
+		
+		echo "<table class='rubric'>\n<tr><th>".__('Actions', 'ctlt_rubric_evaluation')."</th><th>".__('Type', 'ctlt_rubric_evaluation')."</th>";
     	//table horizontal headers
     	foreach ($this->rubric_headers as $h_title) {
 			echo '<th class="Type '.$this->_sanitize_class_name($h_title).'">'.$h_title.'</th>';
@@ -460,15 +459,15 @@ class CTLT_Rubric_Evaluation_Admin
 		$row = 1; //row count
 		foreach ($vertical_titles as $v_title) {
 			echo '<tr>';
-			echo '<td class="action"><a href="#delete" class="ctlt_rubric_delete_row" data-row="'.$row.'">x</a></td>';
+			echo '<td class="action"><a href="#delete" class="ctlt-rubric-delete-row" data-row="'.$row.'">x</a></td>';
 			echo '<td class="heading '.$this->_sanitize_class_name($v_title).'">'.
-					'<label id="rubric_evaluation_rubric_label_'.$row.'" value="'.$v_title.'" />'.$v_title.'</label>'.
-					'<input type="hidden" id="rubric_evaluation_rubric_values_'.$row.'" name="rubric_evaluation_rubric_name[rubric_evaluation_rubric_values_'.$row.']" value="'.$v_title.'"/>'.
+					'<label id="rubric-evaluation-rubric-label_'.$row.'" value="'.$v_title.'" />'.$v_title.'</label>'.
+					'<input type="hidden" id="rubric-evaluation-rubric-values-'.$row.'" name="rubric-evaluation-rubric-name[rubric-evaluation-rubric-values-'.$row.']" value="'.$v_title.'"/>'.
 				'</td>';
 			for ($column = 1; $column < (sizeof($this->rubric_headers) + 1); $column++) {
-				$value = isset($this->options['rubric_evaluation_rubric_name'][$v_title][$this->rubric_headers[($column - 1)]]) ? $this->options['rubric_evaluation_rubric_name'][$v_title][$this->rubric_headers[($column - 1)]] : '';
+				$value = isset($this->options['rubric-evaluation-rubric-name'][$v_title][$this->rubric_headers[($column - 1)]]) ? $this->options['rubric-evaluation-rubric-name'][$v_title][$this->rubric_headers[($column - 1)]] : '';
  				echo '<td class="'.$this->_sanitize_class_name($v_title).' '.$this->_sanitize_class_name($this->rubric_headers[($column - 1)]).'">';
-				echo '<input type="text" id="rubric_evaluation_rubric_values_'.$row.'_'.$column.'" name="rubric_evaluation_rubric_name[rubric_evaluation_rubric_values_'.$row.'_'.$column.']" value="'.$value.'" />';
+				echo '<input type="text" id="rubric-evaluation-rubric-values-'.$row.'_'.$column.'" name="rubric-evaluation-rubric-name[rubric-evaluation-rubric-values-'.$row.'-'.$column.']" value="'.$value.'" />';
 				echo '</td>';
         	}
         	echo '</tr>';
@@ -479,11 +478,11 @@ class CTLT_Rubric_Evaluation_Admin
 	
 	public function output_grading() {
 		$selected = 'Text';
-		$options = get_option('rubric_evaluation_roles_settings');
-		if (isset($options['rubric_evaluation_roles_settings']['rubric_evaluation_grading_type']['rubric_evaluation_grading_type'])) {
-			$selected = $options['rubric_evaluation_roles_settings']['rubric_evaluation_grading_type']['rubric_evaluation_grading_type'];
+		$options = get_option('rubric-evaluation-roles-settings');
+		if (isset($options['rubric-evaluation-roles-settings']['rubric-evaluation-grading-type']['rubric-evaluation-grading-type'])) {
+			$selected = $options['rubric-evaluation-roles-settings']['rubric-evaluation-grading-type']['rubric-evaluation-grading-type'];
 		}
-		echo "<select id='rubric_evaluation_grading_type' name='rubric_evaluation_roles_settings[rubric_evaluation_grading_type]'>";
+		echo "<select id='rubric-evaluation-grading-type' name='rubric-evaluation-roles-settings[rubric-evaluation-grading-type]'>";
 		$keyval = array();
 		foreach ($this->grading_types as $val) {
 			$keyval[] = __($val, 'ctlt_rubric_evaluation');
@@ -510,16 +509,17 @@ class CTLT_Rubric_Evaluation_Admin
 
     	//format the rubric data
     	foreach (range(1, CTLT_rubric_evaluation_Admin::MAX_ROWS) as $row) {
-    		if (isset($input['rubric_evaluation_rubric_values_'.$row])) {
-    			$new_input[$input['rubric_evaluation_rubric_values_'.$row]] = '';
+    		if (isset($input['rubric-evaluation-rubric-values-'.$row])) {
+    			$new_input[$input['rubric-evaluation-rubric-values-'.$row]] = '';
     
     			foreach (range(1, sizeof($this->rubric_headers)) as $column) {
-    				if (isset($input['rubric_evaluation_rubric_values_'.$row.'_'.$column])) {
-    					$new_input[$input['rubric_evaluation_rubric_values_'.$row]][$this->rubric_headers[($column - 1)]] = $input['rubric_evaluation_rubric_values_'.$row.'_'.$column];
+    				if (isset($input['rubric-evaluation-rubric-values-'.$row.'-'.$column])) {
+    					$new_input[$input['rubric-evaluation-rubric-values-'.$row]][$this->rubric_headers[($column - 1)]] = $input['rubric-evaluation-rubric-values-'.$row.'-'.$column];
     				}
     			}
     		}
     	}
+
     	/** steps to add new labels
     	 * 0. need to check for deleted stuff!
     	 * 1. check required and validate fields for new field (currently only label???)
@@ -546,64 +546,67 @@ class CTLT_Rubric_Evaluation_Admin
 		}
 
   		//step 1
-    	if (isset($input['rubric_evaluation_grading_group_field_label']) && !empty($input['rubric_evaluation_grading_group_field_label'])) {
+    	if (isset($input['rubric-evaluation-grading-group-field-label']) && !empty($input['rubric-evaluation-grading-group-field-label'])) {
 			$has_errors = false;
 			//need to make sure that if duedate is set that it needs to be in the future!			
-			if (isset($input['rubric_evaluation_grading_group_field_duedate']) && !empty($input['rubric_evaluation_grading_group_field_duedate'])) {
-				if (time() >= strtotime($input['rubric_evaluation_grading_group_field_duedate'])) {
+			if (isset($input['rubric-evaluation-grading-group-field-duedate']) && !empty($input['rubric-evaluation-grading-group-field-duedate'])) {
+				if (time() >= strtotime($input['rubric-evaluation-grading-group-field-duedate'])) {
 					add_settings_error('rubric_evaluation_rubric', 'due_date_past', __('Please choose a due date that is in the future', 'ctlt_rubric_evaluation'));
 					$has_errors = true;
 				}
 			}
 			
 			$term_description = array(
-				'label' => $input['rubric_evaluation_grading_group_field_label'],
-				'note' => $input['rubric_evaluation_grading_group_field_note'],
-				'total' => $input['rubric_evaluation_grading_group_field_total'],
-				'duedate' => $input['rubric_evaluation_grading_group_field_duedate'],
-				'droptop' => $input['rubric_evaluation_grading_group_advanced_field_droptop'],
-				'dropbottom' => $input['rubric_evaluation_grading_group_advanced_field_dropbottom'],
-				'posttype' => $input['rubric_evaluation_grading_group_advanced_field_posttype']
+				'label' => $input['rubric-evaluation-grading-group-field-label'],
+				'note' => $input['rubric-evaluation-grading-group-field-note'],
+				'total' => $input['rubric-evaluation-grading-group-field-total'],
+				'duedate' => $input['rubric-evaluation-grading-group-field-duedate'],
+				'droptop' => $input['rubric-evaluation-grading-group-advanced-field-droptop'],
+				'dropbottom' => $input['rubric-evaluation-grading-group-advanced-field-dropbottom'],
+				'posttype' => $input['rubric-evaluation-grading-group-advanced-field-posttype']
 			);
 			$term_description = base64_encode(serialize($term_description));
 			
 			//step 2
 			$added_term = '';
 			if (!$has_errors) {
-				$added_term = wp_insert_term($input['rubric_evaluation_grading_group_field_label'], RUBRIC_EVALUATION_TAXONOMY, array('description' => $term_description) );
+				$term_exists = term_exists($input['rubric-evaluation-grading-group-field-label'], RUBRIC_EVALUATION_TAXONOMY);
+				if (is_null($term_exists) || !$term_exists){
+					$added_term = wp_insert_term($input['rubric-evaluation-grading-group-field-label'], RUBRIC_EVALUATION_TAXONOMY, array('description' => $term_description) );
+				} else {
+// 					$added_term = wp_update_term($input['rubric-evaluation-grading-group-field-label'], RUBRIC_EVALUATION_TAXONOMY, array('description' => $term_description) );
+				}
 			}
 
 			//now add to mucked array
 			if (!empty($added_term) && !is_wp_error($added_term) ) {
 				//step 3
 				foreach (range(1, sizeof($this->rubric_headers)) as $column) {
-	    			$new_input[$input['rubric_evaluation_grading_group_field_label']][$this->rubric_headers[($column - 1)]] = 0;
+	    			$new_input[$input['rubric-evaluation-grading-group-field-label']][$this->rubric_headers[($column - 1)]] = 0;
 				}
-				add_settings_error('rubric_evaluation_rubric', 'term_updated', __('Successfully added new row', 'ctlt_rubric_evaluation'), 'updated');
+				add_settings_error('rubric-evaluation-rubric', 'term_updated', __('Successfully added new row', 'ctlt_rubric_evaluation'), 'updated');
 			} else {
-				add_settings_error('rubric_evaluation_rubric', 'add_term_error', __('Problem adding new row', 'ctlt_rubric_evaluation'));
+				add_settings_error('rubric-evaluation-rubric', 'add_term_error', __('Problem adding new row', 'ctlt_rubric_evaluation'));
 			}
 		}
-
     	//format the add new row stuff
-    	return array('rubric_evaluation_rubric_name' => $new_input);
+    	return array('rubric-evaluation-rubric-name' => $new_input);
     }
     
     public function sanitize_roles( $input ) {
     	$new_input = array();
-    	
     	foreach($input as $role => $selected_role) {
-			if (stristr($role, 'rubric_evaluation_role_')) {
-	    		$new_input['rubric_evaluation_roles_settings'][$role] = $selected_role;
-    		} elseif (stristr($role, 'rubric_evaluation_grading_type')) {
-    			$new_input['rubric_evaluation_grading_type'][$role] = $selected_role;
+			if (stristr($role, 'rubric-evaluation-role-')) {
+	    		$new_input['rubric-evaluation-roles-settings'][$role] = $selected_role;
+    		} elseif (stristr($role, 'rubric-evaluation-grading-type')) {
+    			$new_input['rubric-evaluation-grading-type'][$role] = $selected_role;
     		}
     	}
     	
     	//hardcode teacher to admin for now.....
-    	$new_input['rubric_evaluation_roles_settings']['rubric_evaluation_role_teacher'] = 'administrator';
+    	$new_input['rubric-evaluation-roles-settings']['rubric-evaluation-role-teacher'] = 'administrator';
 
-    	return array('rubric_evaluation_roles_settings' => $new_input);
+    	return array('rubric-evaluation-roles-settings' => $new_input);
     }
 
     public function save_rubric_evaluation( $post_id, $post, $update ) {
