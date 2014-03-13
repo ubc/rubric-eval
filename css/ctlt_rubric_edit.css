@@ -1,0 +1,9 @@
+/* in edit/create post/page selecting rubric eval */
+#rubric_evaluation_post .dashicons, #rubric_evaluation_page .dashicons {
+	padding-top: 3px;
+	padding-right: 4px;
+	cursor: default;
+}
+#rubric_evaluation_post .past_due, #rubric_evaluation_page .past_due {
+	cursor: default;
+}

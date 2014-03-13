@@ -55,33 +55,38 @@ class CTLT_Rubric_Evaluation_Admin
     /**
      * Holds the values to be used in the fields callbacks
      */
-	const DB_VERSION = "1.0";
-	const MAX_ROWS = 20;
-	const MAX_GRADES_DROPPED = 5;
-    private $options;
-    private $active_tab;
-    private $rubric_headers = array();
-    private $rubric_post_types = array();	//@TODO need to flesh out
-    private $grading_types = array();
+	const DB_VERSION = "1.0";		//used so if and when we upgrade, it tells us the DB version
+	const MAX_ROWS = 20;			//maximum number of rows AKA Types
+	const MAX_GRADES_DROPPED = 5;	//maximum number of grades dropped (but is not used yet)
+    private $options;				//holds options
+    private $active_tab;			//which tag is currently active when in rubric settings page
+    private $rubric_headers = array();		//columns of the rubric
+    private $rubric_post_types = array();	//holds the post_types that 
+    private $grading_types = array();		//how marks are input by teachers (maybe remove?)
 
     /**
      * Start up
      */
     public function __construct() {
-    	//setup rubric_headers
+    	//setup rubric_headers AKA Columns of the Rubric table
     	$this->rubric_headers = array(
     		__('Student Weight', 'ctlt_rubric_evaluation'),
     		__('Instructor Weight', 'ctlt_rubric_evaluation'),
     		__('Total', 'ctlt_rubric_evaluation')
     	);
+    	
+    	//setup marking method options
     	$this->grading_types = array(
     		'Text',
     		'Dropdown'
     	);
 
-        // Set class property
+        //setup options including initializing defaults
         $this->setup_options();
+        
+        //set active tabs
         $this->active_tab = (isset($_GET['tab']) && $_GET['tab'] === 'display_advanced'? $_GET['tab'] : 'display_rubric');
+        
         //setup action hooks
         add_action( 'admin_menu', array( $this, 'rubric_evaluation_menu' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
@@ -94,11 +99,11 @@ class CTLT_Rubric_Evaluation_Admin
         //register scripts (depends on google CDN!)
         wp_register_style('jquery-ui-1.10.1', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/smoothness/jquery-ui.css');
         wp_register_script('CTLT_Rubric_Evaluation_Settings_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_settings.js', array('jquery', 'jquery-ui-datepicker'), false, true);
-        wp_register_style('CTLT_Rubric_Evaluation_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_evaluation.css');
+        wp_register_style('CTLT_Rubric_Settings_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_settings.css');
     }
-
+    
     /**
-     * Add rubric_evaluation settings page
+     * Adds Rubric Eval menu on Dashboard
      */
     public function rubric_evaluation_menu() {
     	$user = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_user_role();
@@ -122,6 +127,9 @@ class CTLT_Rubric_Evaluation_Admin
     	}
     }
 
+    /**
+     * Setup options, inlcuding initialize default options
+     */
     public function setup_options() {
     	$rubric_evaluation_rubric_name = get_option('rubric-evaluation-rubric-name');
     	if ($rubric_evaluation_rubric_name !== false) {
@@ -145,14 +153,20 @@ class CTLT_Rubric_Evaluation_Admin
     }
 
     /**
-     * Register and add settings
+     * Registers and sets up the rubric evaluation settings page
      */
     public function page_init() {
+    	//this sets up the Rubric Tab
 		$this->setup_rubric_section();
+
+		//this sets up the Advanced Tab
 		$this->setup_roles_section();
 		$this->setup_grading_section();
     }
 
+    /**
+     * Sets up the Rubric Settings Rubric tab
+     */
 	public function setup_rubric_section() {
     	//===============
     	//Rubric section
@@ -197,8 +211,11 @@ class CTLT_Rubric_Evaluation_Admin
     	);
     }
     
+    /**
+     * Sets up Settings fields on the Advanced Tab page for user roles
+     */
     public function setup_roles_section() {
-		//get initial roles for various roles
+		//get initial roles for various types of users
     	$ta = (isset($this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-ta']) ? 
 	    	$this->options['rubric-evaluation-roles-settings']['rubric-evaluation-roles-settings']['rubric-evaluation-role-ta'] :
 	    	'editor');
@@ -217,6 +234,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	'rubric_evaluation_settings_role'
     	);
     	
+    	//setup teacher role
     	add_settings_field(
 	    	'rubric_evaluation_role_teacher', // ID
 	    	__("Teacher's Role", 'ctlt_rubric_evaluation'), // Title
@@ -226,6 +244,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array('rubric-evaluation-role-teacher', $this->_get_role('rubric-evaluation-role-teacher', $teacher), 'disabled')
     	);
     	
+    	//setup ta role
     	add_settings_field(
 	    	'rubric_evaluation_role_ta', // ID
 	    	__("TA's Role", 'ctlt_rubric_evaluation'), // Title
@@ -235,6 +254,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	array('rubric-evaluation-role-ta', $this->_get_role('rubric-evaluation-role-ta', $ta))
     	);
     	
+    	//setup student role
     	add_settings_field(
 	    	'rubric_evaluation_role_student', // ID
 	    	__("Student's Role", 'ctlt_rubric_evaluation'), // Title
@@ -251,6 +271,9 @@ class CTLT_Rubric_Evaluation_Admin
     	);
     }
     
+    /**
+     * Sets up what marking input the grade will be entered in on the Advanced tab of rubric settings
+     */
     public function setup_grading_section() {
     	//===============
     	//grading type section
@@ -262,6 +285,7 @@ class CTLT_Rubric_Evaluation_Admin
 	    	'rubric_evaluation_settings_role'
     	);
     	
+    	//setup what type of marking input
     	add_settings_field(
 	    	'rubric_evaluation_grading_value', // ID
 	    	__("Grading Type", 'output_grading'), // Title
@@ -271,6 +295,9 @@ class CTLT_Rubric_Evaluation_Admin
 		);
     }
 
+    /**
+     * Creates the custom taxonomy of the plugin
+     */
     public function create_taxonomy() {
     	//register custom taxonomy if not set
     	if (!taxonomy_exists(RUBRIC_EVALUATION_TAXONOMY)) {
@@ -315,6 +342,8 @@ class CTLT_Rubric_Evaluation_Admin
     //======================================================================
     /**
      * Options page callback
+     * 
+     * This is the root of the settings page output
      */
 	public function create_rubric_evaluation_settings_page() {
 		$current_screen = get_current_screen();
@@ -322,7 +351,7 @@ class CTLT_Rubric_Evaluation_Admin
 			return;
 		}
 		if ($this->active_tab === 'display_rubric') {
-    		wp_enqueue_style('CTLT_Rubric_Evaluation_Css');
+    		wp_enqueue_style('CTLT_Rubric_Settings_Css');
     		wp_enqueue_style('jquery-ui-1.10.1');
     		wp_enqueue_script('CTLT_Rubric_Evaluation_Settings_Script');
 		}
@@ -334,7 +363,7 @@ class CTLT_Rubric_Evaluation_Admin
     	?>
             <div class="wrap">
                 <h2><?php _e('Rubric Evaluation Settings');?></h2>
-                <?php 
+                <?php //settings error as appropriate
                 	if ($this->active_tab === 'display_advanced') {
 						settings_errors('rubric-evaluation-roles'); 
 					} else {

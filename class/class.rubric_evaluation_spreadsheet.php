@@ -23,6 +23,8 @@ class CTLT_Rubric_Evaluation_Spreadsheet
  
         //get student role
   		$this->_setup_author_and_options();
+  		
+        wp_register_style('CTLT_Rubric_Spreadsheet_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_spreadsheet.css');
 	}
 
     /**
@@ -111,7 +113,9 @@ class CTLT_Rubric_Evaluation_Spreadsheet
      */
     public function create_rubric_evaluate_page()
     {
-		// Set class property
+    	wp_enqueue_style('CTLT_Rubric_Spreadsheet_Css');
+   		
+   		// Set class property
 		$this->options = get_option( 'my_option_name' );
     	?>
 			<div class="wrap">
@@ -140,7 +144,7 @@ class CTLT_Rubric_Evaluation_Spreadsheet
      * Get the settings option array and print one of its values
      */
     public function output_spreadsheet()
-    {
+    {    	
     	echo "<table class='spreadsheet'><tr><th>".__('Students', 'ctlt_rubric_evaluation')."</th>";
     	
     	//columns

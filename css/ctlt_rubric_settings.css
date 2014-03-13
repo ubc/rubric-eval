@@ -1,0 +1,39 @@
+/* rubric eval settings add new type section */
+.add-grading-group div {
+	float: left;
+	padding-right: 10px;
+}
+#add-grading-group-advanced-btn {
+	float: left;
+	clear: both;
+	margin-top: 10px;
+}
+.add-grading-group-advanced {
+	clear: both;
+	padding-top: 10px;
+}
+.rubric-evaluation-select {
+	width: 100px;
+}
+
+/* hide student weight and table styles*/
+.Student_Weight {
+	display: none;
+}
+.Instructor_Weight {
+	display: none;
+}
+table.rubric {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+table.rubric td {
+	border: solid 1px black;
+}
+table.rubric th {
+	border: solid 1px black;
+	text-align: center;
+}
+table.rubric td.action {
+	text-align: center;
+}

@@ -25,6 +25,7 @@ class CTLT_Rubric_Evaluation_Lists
         //save posts/page
         add_action( 'save_post', array($this, 'save_rubric_evaluation'), 10, 3);
         
+        wp_register_script('CTLT_Rubric_Edit_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_edit.css');
 		wp_register_script('CTLT_Rubric_Evaluation_Lists_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_lists.js', array('jquery'), false, true);    
 		wp_register_script('CTLT_Rubric_Evaluation_Edit_Script', RUBRIC_EVALUATION_PLUGIN_URL.'js/ctlt_rubric_edit.js', array('jquery'), false, true);
     }
@@ -243,6 +244,9 @@ class CTLT_Rubric_Evaluation_Lists
 		$tax = get_taxonomies(array('name' => RUBRIC_EVALUATION_TAXONOMY));	
 		$post_terms_raw = get_the_terms($post, $tax);
 		$post_terms = array();
+		
+		wp_enqueue_script('CTLT_Rubric_Edit_Css');
+		
 		if (!empty($post_terms_raw)) {	
 			$post_terms = reset(get_the_terms($post, $tax));
 		}

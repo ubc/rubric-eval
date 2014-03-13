@@ -1,0 +1,45 @@
+/* dashboard widget section */
+ul.rubric_evaluation_list .rubric_evaluation_term {
+	min-width: 100px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	float: left;
+	width: 20%;
+}
+ul.rubric_evaluation_list .rubric_evaluation_med_term {
+	min-width: 100px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	float: left;
+	width: 40%;
+}
+ul.rubric_evaluation_list .rubric_evaluation_term_due {
+	min-width: 75px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	float: left;
+	padding-left: 8px;
+}
+ul.rubric_evaluation_list .rubric_evaluation_anchor {
+	min-width: 100px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	display: block;
+	overflow: hidden;
+}
+ul.rubric_evaluation_list {
+	white-space: nowrap;
+}
+.rubric_evaluation_head  {
+	font-weight: bold;
+	text-decoration: underline;
+}
+.rubric_eval_date_valid {
+	color: green;
+}
+.rubric_eval_date_invalid {
+	color: red;
+}

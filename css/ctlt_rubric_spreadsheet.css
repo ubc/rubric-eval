@@ -1,0 +1,12 @@
+/* spreadsheet styles */
+table.spreadsheet {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+table.spreadsheet td {
+	border: solid 1px black;
+}
+table.spreadsheet th {
+	border: solid 1px black;
+	text-align: center;
+}

@@ -10,10 +10,12 @@ class CTLT_Rubric_Evaluation_Dashboard_Widget {
 	
 	public function __construct() {
 		add_action( 'wp_dashboard_setup', array($this, 'setup_widget') );
+		wp_register_style('CTLT_Rubric_Dashboard_Css', RUBRIC_EVALUATION_PLUGIN_URL.'css/ctlt_rubric_dashboard.css');
 	}
 	
 	public function setup_widget() {
 		wp_add_dashboard_widget('ctlt_rubric_evaluation_widget', __('Rubric Evaluation Widget', 'ctlt_rubric_evaluation'), array( $this, 'output_widget'));
+		wp_enqueue_style('CTLT_Rubric_Dashboard_Css');
 	}
 	
 	public function output_widget() {
