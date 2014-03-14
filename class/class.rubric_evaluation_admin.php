@@ -17,7 +17,6 @@
  * - detach taxonomy with everything else and add custom metabox to page/post/etc manually
  * - for class.front, need to make singular check for post types pulled form admin class???? 
  * - make list of terms ordered by duedate????? 
- * - need to calculate grades
  * 
  * - brake it up into smaller files.
  * - I think you can shorten the id to not include grade book
@@ -25,7 +24,6 @@
  * 
  *
  * PARTIALLY DONE:
- * - Only include css and js on pages that you need it. - only js done. need to do css (http://make.wordpress.org/core/handbook/coding-standards/css/)
  * - duedate is done on the front end for save-post.  can't create or edit a post and select term past duedate.
  * - - need to make saving post smarter:
  * - - - ensure that if you edit post past duedate, that it saves rubric eval term properly (don't change)
@@ -48,7 +46,9 @@
  * - need a way to edit taxonomy on edit/create post page into radio button - DONE
  * - need to add filter for posts/page list pages - done, but just for posts - DONE
  * - ids and classes shouldn't have underscores but dashes - DONE
- *  
+ * - Only include css and js on pages that you need it. - only js done. need to do css (http://make.wordpress.org/core/handbook/coding-standards/css/)- DONE
+ * - need to calculate grades - DONE
+ * 
  */
 class CTLT_Rubric_Evaluation_Admin
 {
@@ -359,7 +359,6 @@ class CTLT_Rubric_Evaluation_Admin
 		//add active class to tabs based on get parameter tab
 		$active_rubric_class = $this->active_tab === 'display_rubric'? 'nav-tab-active' : '';
 		$active_advanced_class = $this->active_tab === 'display_advanced'? 'nav-tab-active' : '';
-
     	?>
             <div class="wrap">
                 <h2><?php _e('Rubric Evaluation Settings');?></h2>
@@ -370,14 +369,14 @@ class CTLT_Rubric_Evaluation_Admin
 						settings_errors('rubric-evaluation-rubric');
 					}
 				?>    
-                
+                <?php //tabs section ?>
                 <h2 class="nav-tab-wrapper">
-
                 	<a href="?page=rubric_evaluation_settings&tab=display_rubric" class="nav-tab <?php echo $active_rubric_class; ?>"><?php echo _x('Rubric', 'rubric tab title', 'ctlt_rubric_evaluation');?></a>
                 	<a href="?page=rubric_evaluation_settings&tab=display_advanced" class="nav-tab <?php echo $active_advanced_class; ?>"><?php echo _x('Advanced', 'advanced tab title', 'ctlt_rubric_evaluation');?></a>
                 </h2> 
+                
                 <form method="post" action="options.php">
-                <?php
+                <?php	//content based on $this->active_tab
     				if ($this->active_tab === 'display_advanced') {
     					settings_fields( 'rubric_evaluation_roles' );
     					do_settings_sections( 'rubric_evaluation_settings_role' );
@@ -389,10 +388,16 @@ class CTLT_Rubric_Evaluation_Admin
                 ?>
                 </form>
             </div>
-            <?php
+		<?php
 	}
-        
+
+	/**
+	 * outputs the part where you can add new rows to the rubric (aka grading group)
+	 * - this works with javascript ctlt_rubric_settings.js 
+	 * - this also works with css ctlt_rubric_settings.css
+	 */
     public function output_grading_group() {
+		//general grading group section
     	?>
     	<a href="#add" class="button action-button" id="add-grading-group-btn">+ <?php _e('Grading Group', 'ctlt_rubric_evaluation');?></a>
     	<div class="add-grading-group" style="display:none;">
@@ -418,6 +423,8 @@ class CTLT_Rubric_Evaluation_Admin
 				<input id="rubric-evaluation-grading-group-field-total" name="rubric-evaluation-rubric-name[rubric-evaluation-grading-group-field-total]" value="">
 			</div>
 			<br>
+			
+			<?php //advanced option section ?>
 			<a href="#add-advanced" class="button action-button" id="add-grading-group-advanced-btn">+ <?php _e('Advanced Options', 'ctlt_rubric_evaluation');?></a>
 			<div class="add-grading-group-advanced" style="display:none;">
 				<div class="grading-group-advanced-droptop">
@@ -452,8 +459,8 @@ class CTLT_Rubric_Evaluation_Admin
 					?>
 					</select>
 				</div>
-			</div>
-		</div>
+			</div> <!-- end of .add-grading-group-advanced div -->
+		</div> <!-- end of .add-grading-group div -->
 		<?php 
     }
     /**
@@ -463,6 +470,10 @@ class CTLT_Rubric_Evaluation_Admin
     	//         print 'Enter your settings below:';
     }
 
+    /**
+     * Outputs a dropdown box for 
+     * @param array $options eg. array(select_id, default_role, extra select attributes)
+     */
     public function output_roles($options) {
 		$select_extras = (isset($options[2])? $options[2] : '');
 		$value = isset($this->options['rubric-evaluation-roles-settings'][$options[0]])? $this->options['rubric-evaluation-roles-settings'][$options[0]] : $options[1];
@@ -472,7 +483,7 @@ class CTLT_Rubric_Evaluation_Admin
     }
 
     /** 
-     * Get the settings option array and print one of its values
+     * Output rubric table
      */
     public function output_rubric() {
 		$vertical_titles = !empty($this->options['rubric-evaluation-rubric-name'])? array_keys($this->options['rubric-evaluation-rubric-name']) : array();
@@ -480,7 +491,7 @@ class CTLT_Rubric_Evaluation_Admin
 		echo "<table class='rubric'>\n<tr><th>".__('Actions', 'ctlt_rubric_evaluation')."</th><th>".__('Type', 'ctlt_rubric_evaluation')."</th>";
     	//table horizontal headers
     	foreach ($this->rubric_headers as $h_title) {
-			echo '<th class="Type '.$this->_sanitize_class_name($h_title).'">'.$h_title.'</th>';
+			echo '<th class="Type '.sanitize_html_class($h_title).'">'.$h_title.'</th>';
 		}
 		echo "</tr>\n";
 		
@@ -489,13 +500,13 @@ class CTLT_Rubric_Evaluation_Admin
 		foreach ($vertical_titles as $v_title) {
 			echo '<tr>';
 			echo '<td class="action"><a href="#delete" class="ctlt-rubric-delete-row" data-row="'.$row.'">x</a></td>';
-			echo '<td class="heading '.$this->_sanitize_class_name($v_title).'">'.
+			echo '<td class="heading '.sanitize_html_class($v_title).'">'.
 					'<label id="rubric-evaluation-rubric-label_'.$row.'" value="'.$v_title.'" />'.$v_title.'</label>'.
 					'<input type="hidden" id="rubric-evaluation-rubric-values-'.$row.'" name="rubric-evaluation-rubric-name[rubric-evaluation-rubric-values-'.$row.']" value="'.$v_title.'"/>'.
 				'</td>';
 			for ($column = 1; $column < (sizeof($this->rubric_headers) + 1); $column++) {
 				$value = isset($this->options['rubric-evaluation-rubric-name'][$v_title][$this->rubric_headers[($column - 1)]]) ? $this->options['rubric-evaluation-rubric-name'][$v_title][$this->rubric_headers[($column - 1)]] : '';
- 				echo '<td class="'.$this->_sanitize_class_name($v_title).' '.$this->_sanitize_class_name($this->rubric_headers[($column - 1)]).'">';
+ 				echo '<td class="'.sanitize_html_class($v_title).' '.sanitize_html_class($this->rubric_headers[($column - 1)]).'">';
 				echo '<input type="text" id="rubric-evaluation-rubric-values-'.$row.'_'.$column.'" name="rubric-evaluation-rubric-name[rubric-evaluation-rubric-values-'.$row.'-'.$column.']" value="'.$value.'" />';
 				echo '</td>';
         	}
@@ -505,6 +516,9 @@ class CTLT_Rubric_Evaluation_Admin
         echo '</table>';
     }
 	
+    /**
+     * Outpus the marking input types setting (AKA Grading Settings on the advanced tab)
+     */
 	public function output_grading() {
 		$selected = 'Text';
 		$options = get_option('rubric-evaluation-roles-settings');
@@ -527,7 +541,7 @@ class CTLT_Rubric_Evaluation_Admin
     //
     //======================================================================
     /**
-     * Sanitize each setting field as needed
+     * Sanitize the rubric tab of the settings section
      *
      * @param array $input Contains all settings fields as array keys
      * @
@@ -622,6 +636,12 @@ class CTLT_Rubric_Evaluation_Admin
     	return array('rubric-evaluation-rubric-name' => $new_input);
     }
     
+    /**
+     * Sanitize the advanced tab of the Rubric settings page
+     * 
+     * @param array $input
+     * @return array
+     */
     public function sanitize_roles( $input ) {
     	$new_input = array();
     	foreach($input as $role => $selected_role) {
@@ -637,54 +657,21 @@ class CTLT_Rubric_Evaluation_Admin
 
     	return array('rubric-evaluation-roles-settings' => $new_input);
     }
-
-    public function save_rubric_evaluation( $post_id, $post, $update ) {
-
-		// don't save for autosave
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return $post_id;
-		}
-		
-		// dont save for revisions
-		if ( isset( $post->post_type ) && $post->post_type == 'revision' ) {
-			return $post_id;
-		}
-
-		$taxterms = CTLT_Rubric_Evaluation_Util::ctlt_rubric_get_terms_for($post->post_type);
-    	if (isset($_POST['rubric_eval_info']) && !empty($_POST['rubric_eval_info']) ) {
-			$term_slug = '';
-			foreach ($taxterms as $term) {
-				if ($term->term_id == $_POST['rubric_eval_info']) {
-					$term_slug = $term->slug;
-					break;
-				}
-			}
-
-			if (!empty($term_slug)) {
-				wp_set_object_terms($post_id, $term_slug, RUBRIC_EVALUATION_TAXONOMY);
-			}
-			
-		} else {	//since it is NOT set, we need to remove it (check for date for due date????)
-			$terms = wp_get_object_terms($post_id, RUBRIC_EVALUATION_TAXONOMY);
-
-			if (!empty($terms)) {
-				$term = reset($terms);
-				wp_remove_object_terms($post_id, $term->slug, RUBRIC_EVALUATION_TAXONOMY);
-			}
-		}
-    }
     
     //======================================================================
     //
     // Private utility functions for the class
     //
     //======================================================================
+    /**
+     * Pulls role from options or if not set, then returns the second parameter
+     * 
+     * @param string $id - key in the option
+     * @param string $default_role
+     * @return string
+     */
     private function _get_role($id, $default_role) {
 		return isset($this->option['role'][$id])? $this->option['role'][$id] : $default_role;
-	}
-	
-	private function _sanitize_class_name($to_sanitize) {
-		return preg_replace('/[^-_a-zA-Z0-9]+/','_', $to_sanitize);
 	}
 }
 

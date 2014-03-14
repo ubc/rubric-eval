@@ -17,10 +17,10 @@
 }
 
 /* hide student weight and table styles*/
-.Student_Weight {
+.StudentWeight {
 	display: none;
 }
-.Instructor_Weight {
+.InstructorWeight {
 	display: none;
 }
 table.rubric {

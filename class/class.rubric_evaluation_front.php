@@ -6,7 +6,7 @@
  */
 class CTLT_Rubric_Evaluation_Front
 {
-	const RUBRIC_EVAL_INFO = 'rubric_eval_mark';
+	const RUBRIC_EVAL_INFO = 'rubric-eval-mark';
 	const RUBRIC_EVAL_MAX_DROPDOWN_MARK = 10;
 	
 	/**
@@ -27,7 +27,7 @@ class CTLT_Rubric_Evaluation_Front
 		$return_result = __('Mark was not saved.  Please refresh the page and try again.', 'ctlt_rubric_evaluation');
 		$verify = wp_verify_nonce($post_parameters['_wpnonce'], CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'_'.$post_parameters['post_type'].'_'.$post_parameters['term_id'].'_'.$post_parameters['post_id']);
 		if ($verify) {
-			$saved = $this->_save_value(get_current_user_id(), $post_parameters['post_type'], $post_parameters['post_id'], $post_parameters['term_id'], $post_parameters['rubric_eval_mark']);
+			$saved = $this->_save_value(get_current_user_id(), $post_parameters['post_type'], $post_parameters['post_id'], $post_parameters['term_id'], $post_parameters[CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO]);
 			if ($saved) {
 				$return_result = __('Mark was saved!', 'ctlt_rubric_evaluation');
 			}
@@ -146,7 +146,7 @@ class CTLT_Rubric_Evaluation_Front
 		$default = (is_null($default) ? 0 : esc_attr($default->mark));
 
 		$display = '';
-		$display .='<select class="rubric_evaluation_select" id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">';
+		$display .='<select class="rubric-evaluation-select" id="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'" name="'.CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_INFO.'">';
 		foreach (array_combine(range(0, CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_MAX_DROPDOWN_MARK), range(0, CTLT_Rubric_Evaluation_Front::RUBRIC_EVAL_MAX_DROPDOWN_MARK)) as $key => $val) {
 			if ($default == $key) {
 				$display .= "<option value='$key' selected='selected'>$val</option>\n";

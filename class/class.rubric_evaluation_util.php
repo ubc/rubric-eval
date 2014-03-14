@@ -157,6 +157,14 @@ class CTLT_Rubric_Evaluation_Util {
 		add_option( 'rubric_evaluation_db_version', CTLT_Rubric_Evaluation_Admin::DB_VERSION );
 	}	
 	
+	/**
+	 * Gets the posts based on parameters passed in
+	 * 
+	 * @param string $post_type
+	 * @param string $author
+	 * @param boolean $hide_empty
+	 * @return array of post objects or empty array
+	 */
 	public static function ctlt_rubric_get_posts($post_type = 'post', $author = null, $hide_empty = false) {
 		if (is_array($post_type)) {
 			extract(array_merge(array(
@@ -201,6 +209,12 @@ class CTLT_Rubric_Evaluation_Util {
 		return $all_posts;
 	}
 	
+	/**
+	 * Create HTML Options (no select tag though)
+	 * @param unknown $arr
+	 * @param string $default
+	 * @return string
+	 */
 	public static function ctlt_rubric_create_html_options($arr, $default = '') {
 		if (!is_array($arr)) {
 			$arr = array($arr);
