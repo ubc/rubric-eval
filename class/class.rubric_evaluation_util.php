@@ -74,7 +74,7 @@ class CTLT_Rubric_Evaluation_Util {
 		if (!empty($role) && in_array($role, $valid_roles)) {
 			switch ($role) {
 				case 'administrator':
-					$return_value = 'activate_plugin';
+					$return_value = 'activate_plugins';
 					break;
 				case 'section_editor':
 				case 'editor':
